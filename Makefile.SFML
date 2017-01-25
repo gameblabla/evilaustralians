@@ -1,0 +1,17 @@
+CC = gcc
+
+CFLAGS = -Os -I/usr/include/CSFML/include  -I./WRAPPER
+LDFLAGS = -L/usr/lib/CSFML/lib -lcsfml-graphics -lcsfml-audio -lcsfml-window -lcsfml-system
+DEFINES = -Wall -DSOUND_ENABLED
+OUTPUT = violent
+
+SOURCES = src/main.c WRAPPER/PC_SFML.c
+OBJS = ${SOURCES:.c=.o}
+
+${OUTPUT}:${OBJS}
+	${CC} -o ${OUTPUT} ${SOURCES} ${CFLAGS} ${LDFLAGS} ${DEFINES} 
+	
+clean:
+	rm src/*.o
+	rm WRAPPER/*.o
+	rm ${OUTPUT}

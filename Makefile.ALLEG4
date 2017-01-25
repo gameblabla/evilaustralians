@@ -1,0 +1,17 @@
+CC = gcc
+
+CFLAGS = -O2 -I./WRAPPER
+LDFLAGS = `allegro-config --libs`
+DEFINES = -DDEBUG 
+OUTPUT = violent
+
+SOURCES = src/main.c WRAPPER/PC_ALLEG4.c
+OBJS = ${SOURCES:.c=.o}
+
+${OUTPUT}:${OBJS}
+	${CC} -o ${OUTPUT} ${SOURCES} ${CFLAGS} ${LDFLAGS} ${DEFINES} 
+	
+clean:
+	rm src/*.o
+	rm WRAPPER/*.o
+	rm ${OUTPUT}

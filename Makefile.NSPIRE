@@ -1,0 +1,41 @@
+DEBUG = FALSE
+
+GCC = nspire-gcc
+AS  = nspire-as
+GXX = nspire-g++
+LD  = nspire-ld
+GENZEHN = genzehn
+
+GCCFLAGS = -Os -Wall -W -marm -mcpu=arm926ej-s
+LDFLAGS = -Wl,--as-needed -I./WRAPPER
+ZEHNFLAGS = --compress
+
+OBJS = src/main.c WRAPPER/NSPIRE.c
+EXE = violent
+DISTDIR = .
+vpath %.tns $(DISTDIR)
+vpath %.elf $(DISTDIR)
+
+all: $(EXE).prg.tns
+
+%.o: %.c
+	$(GCC) $(GCCFLAGS) -c $<
+
+%.o: %.cpp
+	$(GXX) $(GCCFLAGS) -c $<
+	
+%.o: %.S
+	$(AS) -c $<
+
+$(EXE).elf: $(OBJS)
+	mkdir -p $(DISTDIR)
+	$(LD) $^ -o $(DISTDIR)/$@ $(LDFLAGS)
+
+$(EXE).tns: $(EXE).elf
+	$(GENZEHN) --input $(DISTDIR)/$^ --output $(DISTDIR)/$@ $(ZEHNFLAGS)
+
+$(EXE).prg.tns: $(EXE).tns
+	make-prg $(DISTDIR)/$^ $(DISTDIR)/$@
+
+clean:
+	rm -f *.o $(DISTDIR)/$(EXE).tns $(DISTDIR)/$(EXE).elf $(DISTDIR)/$(EXE).prg.tns
