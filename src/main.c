@@ -101,12 +101,10 @@ void Player()
 	player.oldx = player.x;
 	player.oldy = player.y;
 	
-	player.incollision[1] = Collisions_MAP(player.x+6, player.y+22, 10, 1, scroll_x, sizeof(map), 40);
-	
 	/* We are checking for collisions when the character is moving */
 	if (BUTTON.LEFT)
 	{
-		if (player.x < 140)
+		if (player.x < 140 && scroll_x > player.speed)
 		{
 			scroll_progress = player.speed;
 			scroll_x -= scroll_progress;
@@ -135,14 +133,47 @@ void Player()
 		if (player.incollision[0] == 1) player.x = player.oldx;
 	}
 	
+	if (BUTTON.A && player.state == 2)
+	{
+		player.state = 0;
+		player.incollision[1] = 0;
+	}
+	
 	// Character is falling (or on ground)
 	if (player.state == 2)
 	{
+		player.incollision[1] = Collisions_MAP(player.x+6, player.y+22, 10, 1, scroll_x, sizeof(map), 40);
+		player.incollision[3] = Collisions_MAP(player.x+6, player.y+24, 10, 1, scroll_x, sizeof(map), 40);
 		player.y = player.y + player.fallspeed;
+		if (player.incollision[1] == 1) 
+		{
+			player.y = player.oldy;
+		}
+		else if (player.incollision[3] == 1) 
+		{
+			player.y = player.oldy-2;
+		}
+	}
+	else if (player.state == 0)
+	{
+		player.incollision[2] = Collisions_MAP(player.x+6, player.y, 10, 1, scroll_x, sizeof(map), 40);
+		player.y = player.y - player.fallspeed;
+		player.jumptime++;
+		if (player.jumptime > 16) 
+		{
+			player.jumptime = 0;
+			player.state = 2;
+		}
+		
+		if (player.incollision[2] == 1) 
+		{
+			player.y = player.oldy;
+			player.jumptime = 17;
+		}
 	}
 
-	if (player.incollision[1] == 1) 
-	player.y = player.oldy;
+	// If player hits ground when falling
+
 }
 
 void Scrolling()

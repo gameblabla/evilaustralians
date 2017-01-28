@@ -16,8 +16,9 @@ struct main_player
 	unsigned short max_ammo;
 	unsigned char width;
 	unsigned char height;
-	unsigned char incollision[3];
+	unsigned char incollision[4];
 	unsigned char speed;
+	unsigned short jumptime;
 	unsigned char fallspeed;
 	
 } player;
