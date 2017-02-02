@@ -1,0 +1,24 @@
+CC = i686-w64-mingw32-gcc
+CXX = i686-w64-mingw32-g++
+LD = i686-w64-mingw32-g++
+WINDRES = i686-w64-mingw32-windres
+SDL_CONFIG = /usr/i686-w64-mingw32/bin/sdl2-config
+
+CFLAGS = -Os -I./WRAPPER -DJOYSTICK
+LDFLAGS = -static -lmingw32 -lSDL2_mixer -lvorbisfile -logg
+LDFLAGS += $(shell $(SDL_CONFIG) --static-libs) 
+LDFLAGS += -ldinput8 -ldxguid -ldxerr8 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lversion -luuid
+DEFINES = -Wall -DRECENT_RENDER -DSOUND_ENABLED
+DEFINES += -DSAVE
+OUTPUT = violent.exe
+
+SOURCES = src/main.c WRAPPER/PC_SDL2.c
+OBJS = ${SOURCES:.c=.o}
+
+${OUTPUT}:${OBJS}
+	${CC} -o ${OUTPUT} ${SOURCES} ${CFLAGS} ${LDFLAGS} ${DEFINES} 
+	
+clean:
+	rm src/*.o
+	rm WRAPPER/*.o
+	rm ${OUTPUT}
