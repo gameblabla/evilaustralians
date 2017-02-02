@@ -1,12 +1,15 @@
 CC = i586-mingw32msvc-gcc
+SDL_CONFIG = /usr/i586-mingw32msvc/bin/sdl-config
 
-CFLAGS = -Os -I./WRAPPER
-LDFLAGS = -lSDL2 -lSDL2_mixer -mwindows -lmingw32
+CFLAGS = -Os -I./WRAPPER -DJOYSTICK
+LDFLAGS = -static -lmingw32  -lSDL -lSDL_mixer
+LDFLAGS += $(shell $(SDL_CONFIG) --static-libs) 
+LDFLAGS += -ldinput8 -ldxguid -ldxerr8 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lversion -luuid
 DEFINES = -Wall -DRECENT_RENDER -DSOUND_ENABLED
 DEFINES += -DSAVE
 OUTPUT = violent.exe
 
-SOURCES = src/main.c WRAPPER/PC_SDL2.c
+SOURCES = src/main.c WRAPPER/PC_MINGW.c
 OBJS = ${SOURCES:.c=.o}
 
 ${OUTPUT}:${OBJS}

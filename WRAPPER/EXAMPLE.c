@@ -56,16 +56,12 @@ char* game_name = "";
 
 
 /*
-	* Generally, we need two arrays :
-	* One for storing the actual data
-	* and the other for telling to copy which image a second time.
-	* The last one is especially useful for fast blitters. (PCs, Amiga, framebuffer etc...)
+	* Generally, we need one array for storing the actual data
 	* We also need (in general) a variable to store the context. (aka surface or screen)
 	* 
 	* For example (SDL 1.2) :
 	SDL_Surface *sprites_img[MAX_IMAGE];
 	SDL_Surface *screen;
-	unsigned short sprites_img_tocopy[MAX_IMAGE];
 */
 
 /*	
@@ -99,7 +95,7 @@ void msleep(unsigned char milisec)
 	*/
 }
 
-void Init_video()
+void Init_video(char* argv[])
 {
 	/*
 	 * Put everything here for video initialisation and controls.
@@ -115,30 +111,13 @@ void Load_Image(unsigned short a, const char* directory)
 	/*
 		* Put everything here for loading images from a directory.
 		* Also, make sure to free the image/surface before you load a new one in memory !
-		* We need to set the image to copy to zero as well.
 		* For example (very unoptimised on purpose) :
 		* 
 		SDL_FreeSurface(sprites_img[a]);
 		sprites_img[a] = SDL_LoadBMP(directory);
-		sprites_img_tocopy[a] = 0;
 	*/
 }
 
-void Copy_Image(unsigned short a, unsigned short i)
-{
-	/*
-		* Copy image from one id to another id.
-		* So, image id 1 can also be called and shown a second with image id 2 for example.
-		* Generaly, it works like this : (fast blitters)
-		sprites_img_tocopy[i] = a;
-		* 
-		* But if this is supported natively,
-		* use that function instead.
-		* If the native functions do not work,
-		* then have a look at the SFML port on how you should
-		* handle this particular case.
-	*/
-}
 
 void Put_image(unsigned short a, short x, short y)
 {
@@ -147,19 +126,11 @@ void Put_image(unsigned short a, short x, short y)
 		* Put the image in question on screen.
 		* It takes the id of the images you should and also takes
 		* two coordinates : X (horizontal) and Y (vertical).
-		* Here, you need to handle copies as well.
 		* The Allegro5 port gives you a good example of this.
 		* 
 		* For example: (Allegro5)
 		* 
-		if (sprites_img_tocopy[a] > 0)
-		{
-			al_draw_bitmap(sprites_img[sprites_img_tocopy[a]], x, y, 0);
-		}
-		else
-		{
-			al_draw_bitmap(sprites_img[a], x, y, 0);
-		}
+		al_draw_bitmap(sprites_img[a], x, y, 0);
 	*/
 }
 
@@ -171,14 +142,7 @@ void Put_sprite(unsigned short a, short x, short y, unsigned short w, unsigned s
 		* Again, the Allegro5 port is a good example on how to do this.
 		* For example: (Allegro5)
 		* 
-		if (sprites_img_tocopy[a] > 0)
-		{
-			al_draw_bitmap_region(sprites_img[sprites_img_tocopy[a]], f*w, 0, w, h, x, y, 0);
-		}
-		else
-		{
-			al_draw_bitmap_region(sprites_img[a], f*w, 0, w, h, x, y, 0);
-		}
+		al_draw_bitmap_region(sprites_img[a], f*w, 0, w, h, x, y, 0);
 	*/
 }
 
@@ -201,10 +165,10 @@ void Update_video()
 		Update everything on screen and keep it in sync with the framerate.
 		For example : (SDL 1.2) 
 
-			Uint32 start;
-			start = SDL_GetTicks();
-			SDL_Flip(screen);
-			if(real_FPS > SDL_GetTicks()-start) msleep(real_FPS-(SDL_GetTicks()-start));
+		Uint32 start;
+		start = SDL_GetTicks();
+		SDL_Flip(screen);
+		if(real_FPS > SDL_GetTicks()-start) msleep(real_FPS-(SDL_GetTicks()-start));
 
 		This is where the msleep function comes in action !
 		Remember, compare it to the other ports !
@@ -274,15 +238,12 @@ void Clear_Image(unsigned short a)
 	/*
 	 * Clear an image in question.
 	 * Make sure it's not NULL before you clear it !
-	 * Set imagetocopy to 0 as well !
 	 * For example : (SDL 1.2)
 
 		if (sprites_img[a] != NULL)
 		{
 			SDL_FreeSurface(sprites_img[a]);
 		}
-		sprites_img_tocopy[a] = 0;
-
 	 */
 }
 
@@ -300,9 +261,7 @@ void Clear_Images()
 			{
 				SDL_FreeSurface(sprites_img[i]);
 			}
-			sprites_img_tocopy[i] = 0;
 		}
-
 	 */
 }
 

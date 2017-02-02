@@ -1,9 +1,9 @@
 CC = gcc
 
-CFLAGS = -O0 -g -Wall -I./WRAPPER
-LDFLAGS = -Wl,--as-needed `sdl-config --cflags --libs` -lSDL_mixer 
+CFLAGS = -O0 -Wall -I./WRAPPER -DSOUND_ENABLED
+LDFLAGS = `sdl-config --cflags --libs` -lSDL_mixer
 DEFINES = -DSOUND_ENABLED
-OUTPUT = violent
+OUTPUT = violent.elf
 
 SOURCES = src/main.c WRAPPER/PC_SDL12.c
 OBJS = ${SOURCES:.c=.o}

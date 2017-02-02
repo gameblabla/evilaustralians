@@ -1,16 +1,14 @@
 /*
-   COPYRIGHT (C) 2014-2015 GAMEBLABLA
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+The MIT License (MIT)
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+Copyright (c) 2016 Gameblabla
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), 
+to deal in the Software without restriction, 
+including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, 
+and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
 */
 
 /*                
@@ -39,7 +37,7 @@
 	#include <allegro5/allegro_audio.h>
 	#define MAX_SFX 32
 	ALLEGRO_SAMPLE *music;
-	ALLEGRO_SAMPLE *gfx_id[MAX_SFX];
+	ALLEGRO_SAMPLE *sfx_id[MAX_SFX];
 #endif
 
 #include "INPUT.h"
@@ -54,30 +52,28 @@ ALLEGRO_EVENT_QUEUE *event_queue;
 ALLEGRO_TIMER *timer ;
 ALLEGRO_BITMAP *buffer;
 
-unsigned short sprites_img_tocopy[MAX_IMAGE];
-
 float scaleW,scaleH,scaleX,scaleY;
 
 /* 	PC
 	CONTROLLER KEY MAPPINGS
 */
-	#define Buttons_UP ALLEGRO_KEY_UP
-	#define Buttons_LEFT ALLEGRO_KEY_LEFT
-	#define Buttons_RIGHT ALLEGRO_KEY_RIGHT
-	#define Buttons_DOWN ALLEGRO_KEY_DOWN
-	#define Buttons_A ALLEGRO_KEY_X
-	#define Buttons_B ALLEGRO_KEY_C
-	#define Buttons_C ALLEGRO_KEY_V
-	#define Buttons_D ALLEGRO_KEY_B
-	#define Buttons_START ALLEGRO_KEY_SPACE
-	#define Buttons_SELECT ALLEGRO_KEY_BACKSPACE
-	#define Buttons_QUIT ALLEGRO_KEY_ESCAPE
+#define Buttons_UP ALLEGRO_KEY_UP
+#define Buttons_LEFT ALLEGRO_KEY_LEFT
+#define Buttons_RIGHT ALLEGRO_KEY_RIGHT
+#define Buttons_DOWN ALLEGRO_KEY_DOWN
+#define Buttons_A ALLEGRO_KEY_X
+#define Buttons_B ALLEGRO_KEY_C
+#define Buttons_C ALLEGRO_KEY_V
+#define Buttons_D ALLEGRO_KEY_B
+#define Buttons_START ALLEGRO_KEY_SPACE
+#define Buttons_SELECT ALLEGRO_KEY_BACKSPACE
+#define Buttons_QUIT ALLEGRO_KEY_ESCAPE
 	
 void msleep(unsigned char milisec)
 {
 }
 
-void Init_video()
+void Init_video(char* argv[])
 {
 	short i;
 	short windowWidth, windowHeight;
@@ -101,21 +97,14 @@ void Init_video()
 	screen = al_create_display(windowWidth, windowHeight);
 	buffer = al_create_bitmap(320, 240);
 
-	/* 
-	FFUUUUU, this doesn't work 
-	float sx = windowWidth / 320;
-	float sy = windowHeight / 240;
-	*/
+	/*float sx = float(windowWidth / 320);
+	float sy = float(windowHeight / 240);*/
 	
 	if (windowWidth>windowHeight)
 	{
 		for(i=0;scaleH<windowHeight+1;i++)
 		{
-			/* 
-			 * Replace 1.3333... with (4/3) and see the result...
-			 * I have no idea why this does not work...
-			*/
-			scaleW = scaleW + 1.333333333;
+			scaleW = float(scaleW + 4/3);
 			scaleH = scaleH + 1;
 		}
 		
@@ -127,7 +116,7 @@ void Init_video()
 		for(i=0;scaleW<windowWidth+1;i++)
 		{
 			scaleW = scaleW + 1;
-			scaleH = scaleH + 0.75;
+			scaleH = float(scaleH + 3/4);
 		}
 		
 		scaleW = windowWidth;
@@ -167,18 +156,6 @@ void Load_Image(unsigned short a, const char* directory)
 	#ifdef DEBUG
 		fprintf(stderr, "Loading image %d (%s) was successful\n", a, directory);
 	#endif
-	
-	sprites_img_tocopy[a] = 0;
-
-}
-
-void Copy_Image(unsigned short a, unsigned short i)
-{
-	#ifdef DEBUG_CRAZY
-		fprintf(stderr, "Transfering the data of id %d to id %d.\n", a, i);
-	#endif
-	
-	sprites_img_tocopy[i] = a;
 }
 
 void Put_image(unsigned short a, short x, short y)
@@ -187,14 +164,7 @@ void Put_image(unsigned short a, short x, short y)
 		fprintf(stderr, "Put image %d on screen and update its position\n X: %d \n Y: %d\n", a, x ,y);
 	#endif
 	
-	if (sprites_img_tocopy[a] > 0)
-	{
-		al_draw_bitmap(sprites_img[sprites_img_tocopy[a]], x, y, 0);
-	}
-	else
-	{
-		al_draw_bitmap(sprites_img[a], x, y, 0);
-	}
+	al_draw_bitmap(sprites_img[a], x, y, 0);
 }
 
 void Put_sprite(unsigned short a, short x, short y, unsigned short w, unsigned short h, unsigned char f)
@@ -203,15 +173,7 @@ void Put_sprite(unsigned short a, short x, short y, unsigned short w, unsigned s
 		fprintf(stderr, "Put sprite %d on screen and update its position\n X: %d \n Y: %d\n Frame: %d\n", a, x ,y, f);
 	#endif
 	
-	if (sprites_img_tocopy[a] > 0)
-	{
-		al_draw_bitmap_region(sprites_img[sprites_img_tocopy[a]], f*w, 0, w, h, x, y, 0);
-	}
-	else
-	{
-		al_draw_bitmap_region(sprites_img[a], f*w, 0, w, h, x, y, 0);
-	}
-
+	al_draw_bitmap_region(sprites_img[a], f*w, 0, w, h, x, y, 0);
 }
 
 void Clear_screen()
@@ -318,8 +280,6 @@ void Clear_Image(unsigned short a)
 	{
 		al_destroy_bitmap(sprites_img[a]);
 	}
-	
-	sprites_img_tocopy[a] = 0;
 }
 
 void Clear_Images()
@@ -332,8 +292,6 @@ void Clear_Images()
 		{
 			al_destroy_bitmap(sprites_img[i]);
 		}
-		
-		sprites_img_tocopy[i] = 0;
 	}
 }
 
@@ -386,11 +344,11 @@ void Clear_Images()
 			fprintf(stderr, "Loading sound effect %d (%s) in memory\n", i, directory);
 		#endif
 		
-		if (gfx_id[i] != NULL)
+		if (sfx_id[i] != NULL)
 		{
-			al_destroy_sample(gfx_id[i]);
+			al_destroy_sample(sfx_id[i]);
 		}
-		gfx_id[i] = al_load_sample(directory);
+		sfx_id[i] = al_load_sample(directory);
 	}
 
 	void Play_SFX(unsigned char i)
@@ -399,7 +357,7 @@ void Clear_Images()
 			fprintf(stderr, "Play sound effect %d loaded in memory\n", i);
 		#endif
 		
-		al_play_sample(gfx_id[i], 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_ONCE, NULL);
+		al_play_sample(sfx_id[i], 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_ONCE, NULL);
 	}
 
 	void Unload_SFX()
@@ -412,9 +370,9 @@ void Clear_Images()
 		
 		for (i=0;i<MAX_SFX;i++)
 		{ 
-			if (gfx_id[i] != NULL)
+			if (sfx_id[i] != NULL)
 			{
-				al_destroy_sample(gfx_id[i]);
+				al_destroy_sample(sfx_id[i]);
 			}
 		}
 	}
