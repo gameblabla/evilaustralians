@@ -2,6 +2,8 @@
 *.exe
 *.tns
 *.dll
+N64/
+N64
 src/*.o
 WRAPPER
 WRAPPER/

@@ -146,7 +146,7 @@ void Load_Image(unsigned short a, char* directory)
 	*/
 	if (already_inmemory[a]) UnloadAnim(anim[a]);
 	anim[a] = LoadAnim(directory, MEMTYPE_CEL);
-	already_inmemory[a] = 0;
+	already_inmemory[a] = 1;
 }
 
 void Copy_Image(unsigned short a, unsigned char i)

@@ -114,7 +114,7 @@ void Put_player();
 void Player();
 struct main_player Place_thing(unsigned char tile_x, unsigned char tile_y, struct main_player toput, unsigned char playerornot, unsigned char direction, unsigned char flip);
 struct main_player Enemy_AI(struct main_player enemy, struct main_player playertofollow);
-unsigned char Collisions_MAP(short col_x, short col_y, unsigned short width_player, unsigned short height_player, short scroll_x, unsigned short size_map, unsigned short tile_width_map);
+unsigned char Collisions_MAP(short col_x, short col_y, unsigned short w, unsigned short h);
 unsigned char Collision(unsigned short x, unsigned short y, unsigned char w, unsigned char h, unsigned short x2, unsigned short y2, unsigned char w2, unsigned char h2);
 void Animate_Player();
 struct main_player Enemy(struct main_player enemy, unsigned char id, struct main_player pp);

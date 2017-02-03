@@ -1,7 +1,7 @@
 ====================
 Evil Australians
 ====================
-Platforms : Windows, Linux (from source), Dreamcast, 3DO (Alpha), GCW0
+Platforms : Windows, Linux (from source), Dreamcast, 3DO, GCW0
 
 Evil Australians is a video game developed by me, gameblabla.
 It's a platforming arena game made from scratch with the help of my own library, Gameblabla's Wrapper.
@@ -15,7 +15,7 @@ Story
 ==========
 
 John, living in Australia, is an avid video game collector.
-However, he learns from the news that the Australian governmentklmm are soon going to ban video games.
+However, he learns from the news that the Australian government is soon going to ban video games.
 John became furious : 
 he grabs his weapons and swears vengeance on the government.
 

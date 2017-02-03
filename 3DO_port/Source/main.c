@@ -425,8 +425,8 @@ struct main_player Place_thing(unsigned char tile_x, unsigned char tile_y, struc
 
 void Put_Background(short scroll_x, unsigned char size_tile_w)
 {
-	unsigned short map_x;
-	unsigned short map_y;
+	unsigned char map_x;
+	unsigned char map_y;
 	unsigned short i;
 	
 	size_tile_w = size_tile_w - 1;
@@ -559,7 +559,7 @@ void Player()
 				{
 					player.x = player.x - player.speed;
 				}
-				player.incollision[0] = Collisions_MAP(player.x, player.y, 1, player.height, scroll_x, map_size, map_width);
+				player.incollision[0] = Collisions_MAP(player.x, player.y, 1, player.height);
 			}
 			else if (BUTTON.RIGHT)
 			{	
@@ -575,7 +575,7 @@ void Player()
 				{
 					player.x = player.x + player.speed;
 				}
-				player.incollision[0] = Collisions_MAP(player.x + (player.width+1), player.y, 1, player.height, scroll_x, map_size, map_width);
+				player.incollision[0] = Collisions_MAP(player.x + (player.width+1), player.y, 1, player.height);
 			}
 		}
 		
@@ -583,32 +583,36 @@ void Player()
 		
 		switch(player.state)
 		{
-			/* Character is falling (or on ground) */
 			case 2:
-				player.incollision[1] = Collisions_MAP(player.x+6, player.y+player.height, 10, 1, scroll_x, map_size, map_width);
-				player.incollision[3] = Collisions_MAP(player.x+6, player.y+(player.height+2), 10, 1, scroll_x, map_size, map_width);
-				player.y = player.y + player.fallspeed;
-				
-				// If player hits ground then MAKEITSTICKTODAHGROUND
+				player.y += player.fallspeed;
+				player.incollision[1] = Collisions_MAP(player.x+6, player.y, 10, player.height+1);
 				if (player.incollision[1] == 1) 
 				{
-					player.y = player.oldy;
-					// If player is on the ground and A is pressed, make it jump
-					if (BUTTON.A)
+					while(player.incollision[1]==1)
 					{
-						player.state = 0;
-						player.incollision[1] = 0;
+						player.y -= 1;
+						player.incollision[1] = Collisions_MAP(player.x+6, player.y, 10, player.height);
 					}
+					player.state = 1;
+					player.incollision[1] = 0;
 				}
-				// If Player is too far below, detect that and reposition it
-				else if (player.incollision[3] == 1) 
+			break;
+			case 1:
+				player.incollision[1] = Collisions_MAP(player.x+6, player.y, 10, player.height);
+				if (BUTTON.A)
 				{
-					player.y = player.oldy - (player.fallspeed-1);
+					player.state = 0;
+					player.incollision[1] = 0;
+				}
+				else if (player.incollision[1] == 0) 
+				{
+					player.state = 2;
+					player.incollision[1] = 0;
 				}
 			break;
 			/* 0 means the player is jumping */
 			case 0:
-				player.incollision[4] = Collisions_MAP(player.x+6, player.y, 10, 1, scroll_x, map_size, map_width);
+				player.incollision[4] = Collisions_MAP(player.x+6, player.y, 10, 1);
 				player.y = player.y - player.fallspeed;
 				player.jumptime++;
 				
@@ -617,14 +621,6 @@ void Player()
 					player.jumptime = 0;
 					player.state = 2;
 				}
-				/*else if (player.jumptime > 5) 
-				{
-					if (BUTTON.A==0)
-					{
-						player.jumptime = 21;
-					}
-				}*/
-				
 				
 				// If Player is hitting the celling, make it fall
 				if (player.incollision[4] == 1) 
@@ -632,7 +628,7 @@ void Player()
 					player.y = player.oldy;
 					while (player.incollision[4])
 					{
-						player.incollision[4] = Collisions_MAP(player.x+6, player.y, 10, 1, scroll_x, map_size, map_width);
+						player.incollision[4] = Collisions_MAP(player.x+6, player.y, 10, 1);
 						player.y += 1;
 					}
 					player.jumptime = 21;
@@ -764,13 +760,13 @@ struct main_player Enemy(struct main_player enemy, unsigned char id, struct main
 				case 1:
 					enemy.flip = 0;
 					enemy.x += (enemy.speed);
-					enemy.incollision[0] = Collisions_MAP(enemy.x + (enemy.width+1), enemy.y, 1, 22, scroll_x, map_size, map_width);
+					enemy.incollision[0] = Collisions_MAP(enemy.x + (enemy.width+1), enemy.y, 1, 22);
 					enemy.moving = 1;
 				break;
 				case 0:
 					enemy.flip = 20;
 					enemy.x -= (enemy.speed);
-					enemy.incollision[0] = Collisions_MAP(enemy.x, enemy.y, 1, 22, scroll_x, map_size, map_width);
+					enemy.incollision[0] = Collisions_MAP(enemy.x, enemy.y, 1, 22);
 					enemy.moving = 1;
 				break;
 				case 2:
@@ -803,33 +799,39 @@ struct main_player Enemy(struct main_player enemy, unsigned char id, struct main
 			enemy.isfiring = 0;
 		}
 		
-
 		// Character is falling (or on ground)
 		switch(enemy.state)
 		{
+			/* This could still be improved, pehaps i should add a new state for on-ground and falling */
 			case 2:
-				enemy.incollision[1] = Collisions_MAP(enemy.x+6, enemy.y+22, 10, 1, scroll_x, map_size, map_width);
-				enemy.incollision[3] = Collisions_MAP(enemy.x+6, enemy.y+24, 10, 1, scroll_x, map_size, map_width);
-				enemy.y = enemy.y + enemy.fallspeed;
-				
-				// If player hits ground then MAKEITSTICKTODAHGROUND
+				enemy.y += enemy.fallspeed;
+				enemy.incollision[1] = Collisions_MAP(enemy.x+6, enemy.y, 10, enemy.height+1);
 				if (enemy.incollision[1] == 1) 
 				{
-					enemy.y = enemy.oldy;
-					// If player is on the ground and A is pressed, make it jump
-					if (enemy.jump)
+					while(enemy.incollision[1]==1)
 					{
-						enemy.state = 0;
-						enemy.incollision[1] = 0;
+						enemy.y -= 1;
+						enemy.incollision[1] = Collisions_MAP(enemy.x+6, enemy.y, 10, enemy.height);
 					}
+					enemy.state = 1;
+					enemy.incollision[1] = 0;
 				}
-				// If Player is too far below, detect that and reposition it
-				else if (enemy.incollision[3] == 1) 
-					enemy.y = enemy.oldy - (enemy.fallspeed-1);
-
+			break;
+			case 1:
+				enemy.incollision[1] = Collisions_MAP(enemy.x+6, enemy.y, 10, enemy.height);
+				if (enemy.jump)
+				{
+					enemy.state = 0;
+					enemy.incollision[1] = 0;
+				}
+				else if (enemy.incollision[1] == 0) 
+				{
+					enemy.state = 2;
+					enemy.incollision[1] = 0;
+				}
 			break;
 			case 0:
-				enemy.incollision[4] = Collisions_MAP(enemy.x+6, enemy.y, 10, 1, scroll_x, map_size, map_width);
+				enemy.incollision[4] = Collisions_MAP(enemy.x+6, enemy.y, 10, 1);
 				enemy.y = enemy.y - enemy.fallspeed;
 				enemy.jumptime++;
 				
@@ -847,7 +849,7 @@ struct main_player Enemy(struct main_player enemy, unsigned char id, struct main
 					enemy.y = enemy.oldy;
 					while (enemy.incollision[4])
 					{
-						enemy.incollision[4] = Collisions_MAP(enemy.x+6, enemy.y, 10, 1, scroll_x, map_size, map_width);
+						enemy.incollision[4] = Collisions_MAP(enemy.x+6, enemy.y, 10, 1);
 						enemy.y += 1;
 					}
 					enemy.jumptime = 21;
@@ -863,14 +865,14 @@ struct main_player Enemy(struct main_player enemy, unsigned char id, struct main
 				case 0:
 				while (enemy.incollision[0])
 				{
-					enemy.incollision[0] = Collisions_MAP(enemy.x, enemy.y, 0, 22, scroll_x, map_size, map_width);
+					enemy.incollision[0] = Collisions_MAP(enemy.x, enemy.y, 0, 22);
 					if (enemy.incollision[0] == 1) enemy.x += 1;
 				}
 				break;
 				case 1:
 				while (enemy.incollision[0])
 				{
-					enemy.incollision[0] = Collisions_MAP(enemy.x + (enemy.width+1), enemy.y, 0, 22, scroll_x, map_size, map_width);
+					enemy.incollision[0] = Collisions_MAP(enemy.x + (enemy.width+1), enemy.y, 0, 22);
 					if (enemy.incollision[0] == 1) enemy.x -= 1;
 				}
 				break;
@@ -976,7 +978,7 @@ void Bullets()
 				bullets[i].x -= bullets[i].speed + (scroll_progress);
 			
 			// test collisions against the map
-			bullets[i].col = Collisions_MAP(bullets[i].x, bullets[i].y, 5, 5, scroll_x, map_size, map_width);
+			bullets[i].col = Collisions_MAP(bullets[i].x, bullets[i].y, 5, 5);
 			
 			// .player == 0 means that the bullet belongs to the enemy
 			if (bullets[i].player == 0)
@@ -1036,33 +1038,34 @@ void Bullets()
  * Will be improved later
  * */
 
-unsigned char Collisions_MAP(short col_x, short col_y, unsigned short width_player, unsigned short height_player, short scroll_x, unsigned short size_map, unsigned short tile_width_map)
-{
-	unsigned short i, a = 0, y = 0;
-	signed short temp_x = 0, temp_y = 0;
+#define PIX_TO_MAP(x) ((x) / 16)
+/* This converts a map-coordinate to an index of the map array. */
+#define MAP_TO_INDEX(x, y, a) ((y) * a + x)
 
-	for (i=0;i<size_map;i++)
+unsigned char Collisions_MAP(short col_x, short col_y, unsigned short w, unsigned short h)
+{
+	unsigned short x = col_x + scroll_x;
+	unsigned short y = col_y - 1;
+	unsigned short start_x = PIX_TO_MAP(x); // which tile does the hit rectangle start at?
+	unsigned short end_x = PIX_TO_MAP(x + w); // which tile does it end at?
+	unsigned short start_y = PIX_TO_MAP(y);
+	unsigned short end_y = PIX_TO_MAP(y + h);
+	unsigned char i, j;
+	unsigned short tile;
+	
+	for (i = start_x; i <= end_x; i++)
 	{
-		a++;
-		if (a > (tile_width_map-1))
-		{
-			y++;
-			a = 0;
-		}
+		if (end_x > map_width) end_x = map_width;
 		
-		if (collision_map[a+(y*tile_width_map)] == 1)
+		for (j = start_y; j <= end_y; j++)
 		{
-			temp_x = (a * SIZE_TILE)-scroll_x;
-			temp_y = y * SIZE_TILE;
-			if ( (col_x + width_player > temp_x) && (col_x < temp_x + SIZE_TILE) )
-			{
-				if ( (col_y + height_player > temp_y ) && (col_y < temp_y + SIZE_TILE) )
-				{
-					return 1;
-				}
-			}
+			if (end_y > 15) end_y = 15;
+			tile = MAP_TO_INDEX(i, j, map_width);
+			if (collision_map[tile]) // this actually checks whether a tile collides.
+				return 1;
 		}
 	}
+	
 	return 0;
 }
 
