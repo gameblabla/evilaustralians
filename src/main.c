@@ -1031,42 +1031,28 @@ void Bullets()
 
 /* Collisions
  * Checks collisions against the map
- * Thanks Cumred Snektron for the routine, it was much better than what i came up with !
+ * Thanks Cumred Snektron for the functions, it's definitively better than i came up with !
+ * 
+ * LICENSE
+ * gameblabla	btw, is your code public domain ?	11:38:56 PM
+ * Snektron	use it as you like gameblabla	11:55:25 PM
  * */
  
-/* Wwe can convert a pixel-coordinate to map-coordinates by
-dividing by the tile's size in pixels.
-because the tiles are square we can use the same function for x and y coordinates.
+/*
+	We can convert a pixel-coordinate to map-coordinates by dividing by the tile's size in pixels.
+	because the tiles are square we can use the same function for x and y coordinates.
 */
 #define PIX_TO_MAP(x) ((x) / 16)
+//#define PIX_TO_MAP(x) ((x)>>4)
 /* This converts a map-coordinate to an index of the map array. */
 #define MAP_TO_INDEX(x, y, a) ((y) * a + x)
 
 unsigned char Collisions_MAP(short col_x, short col_y, unsigned short w, unsigned short h)
 {
-	unsigned short x = col_x + scroll_x;
-	unsigned short y = col_y - 1;
-	unsigned short start_x = PIX_TO_MAP(x); // which tile does the hit rectangle start at?
-	unsigned short end_x = PIX_TO_MAP(x + w); // which tile does it end at?
-	unsigned short start_y = PIX_TO_MAP(y);
-	unsigned short end_y = PIX_TO_MAP(y + h);
-	unsigned char i, j;
-	unsigned short tile;
-	
-	for (i = start_x; i <= end_x; i++)
-	{
-		if (end_x > map_width) end_x = map_width;
-		
-		for (j = start_y; j <= end_y; j++)
-		{
-			if (end_y > 15) end_y = 15;
-			tile = MAP_TO_INDEX(i, j, map_width);
-			if (collision_map[tile]) // this actually checks whether a tile collides.
-				return 1;
-		}
-	}
-	
-	return 0;
+    unsigned short map_x = PIX_TO_MAP(col_x+scroll_x);
+	unsigned short map_y = PIX_TO_MAP(col_y+h);
+	unsigned short tile = MAP_TO_INDEX(map_x, map_y, map_width);
+    return !!collision_map[tile];
 }
 
 /*
