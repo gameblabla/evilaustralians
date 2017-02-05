@@ -414,27 +414,24 @@ struct main_player Place_thing(unsigned char tile_x, unsigned char tile_y, struc
 
 void Put_Background(short scroll_x, unsigned char size_tile_w)
 {
-	unsigned short map_x;
-	unsigned short map_y;
-	unsigned short i;
+	unsigned char c, r;
+	unsigned short tmp;
+	unsigned char drawlimit[2];
 	
-	size_tile_w = size_tile_w - 1;
-	map_x = 0;
-	map_y = 0;
-	
-	for(i=0;i<map_size;i++)
+	drawlimit[0] = 0;
+	if (scroll_x > 0) drawlimit[0] = (scroll_x)/16;
+	drawlimit[1] = drawlimit[0]+21;
+	if (drawlimit[1] > size_tile_w) drawlimit[1] = size_tile_w;
+
+	for (c = drawlimit[0]; c < drawlimit[1]; c++) 
 	{
-		if (background_map[i] > 0)
-		Put_sprite(2, (map_x*SIZE_TILE)-scroll_x, map_y*SIZE_TILE, SIZE_TILE, SIZE_TILE, background_map[i]);
-		
-		map_x++;
-		if (map_x > size_tile_w)
+		for (r = 0; r < 15; r++) 
 		{
-			map_x = 0;
-			map_y = map_y + 1;
+			tmp = c + (size_tile_w * r);
+			if (background_map[tmp] != 0) 
+			Put_sprite(2, (c*SIZE_TILE)-scroll_x, r*SIZE_TILE, SIZE_TILE, SIZE_TILE, 1);
 		}
 	}
-
 }
 
 
@@ -1050,8 +1047,10 @@ void Bullets()
 unsigned char Collisions_MAP(short col_x, short col_y, unsigned short w, unsigned short h)
 {
     unsigned short map_x = PIX_TO_MAP(col_x+scroll_x);
-	unsigned short map_y = PIX_TO_MAP(col_y+h);
+	unsigned short map_y = PIX_TO_MAP(col_y+h-1);
 	unsigned short tile = MAP_TO_INDEX(map_x, map_y, map_width);
+	/* If it's checking a tile that does not exist, return 0 */
+	if (tile > map_size) return 0;
     return !!collision_map[tile];
 }
 

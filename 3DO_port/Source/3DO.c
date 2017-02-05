@@ -160,8 +160,6 @@ void Put_image(unsigned short a, short x, short y)
 
 void Put_sprite(unsigned short a, short x, short y, unsigned short w, unsigned short h, unsigned char f)
 {
-	if (x < -w || x > 320 || y < -h || y > 240)
-		return;
 	anim[a]->cur_Frame	= Convert32_F16(f);
 	DrawAnimCel(anim[a], TheScreen.sc_BitmapItems[gCurrentScreen], x, y, 0, 0);
 }

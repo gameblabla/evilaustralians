@@ -1,6 +1,6 @@
 CC = gcc
 
-CFLAGS = -O0 -Wall -I./WRAPPER -DSOUND_ENABLED
+CFLAGS = -O0 -g -Wall -I./WRAPPER -DSOUND_ENABLED
 LDFLAGS = `sdl-config --cflags --libs` -lSDL_mixer
 DEFINES = -DSOUND_ENABLED
 OUTPUT = violent.elf
