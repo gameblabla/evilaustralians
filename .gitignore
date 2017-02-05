@@ -3,6 +3,9 @@
 *.tns
 *.dll
 *.out
+*.v64
+*.dfs
+*.bin
 txt1.txt
 txt2.txt
 N64/

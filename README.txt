@@ -1,7 +1,7 @@
 ====================
 Evil Australians
 ====================
-Platforms : Windows, Linux (from source), Dreamcast, 3DO, GCW0
+Platforms : Windows, Linux (from source), Dreamcast, 3DO, N64, GCW0
 
 Evil Australians is a video game developed by me, gameblabla.
 It's a platforming arena game made from scratch with the help of my own library, Gameblabla's Wrapper.
