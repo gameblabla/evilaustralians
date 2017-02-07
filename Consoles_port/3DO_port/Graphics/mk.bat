@@ -12,4 +12,9 @@
 
 ..\Bin\BMPTo3DOAnim.exe 8 40 title.bmp ..\CD\data\title.bmp
 
+..\Bin\BMPTo3DOAnim.exe 64 240 level1.bmp ..\CD\data\level1.bmp
+..\Bin\BMPTo3DOAnim.exe 64 240 level2.bmp ..\CD\data\level2.bmp
+..\Bin\BMPTo3DOAnim.exe 64 240 level3.bmp ..\CD\data\level3.bmp
+..\Bin\BMPTo3DOAnim.exe 64 240 level4.bmp ..\CD\data\level4.bmp
+
 pause

@@ -27,7 +27,7 @@ int main(void)
 	Load_SFX(4, "DATA/shoot_enemy.aiff");
 	Load_Image(1,"DATA/player.bmp");
 	Load_Image(2,"DATA/temp.bmp");
-	Load_Image(100,"DATA/font.bmp");
+	Load_Image(6,"DATA/font.bmp");
 	Change_game(0, current_level);
 	
 	while (!done)
@@ -36,12 +36,13 @@ int main(void)
 		switch(game_mode)
 		{
 			case 0:
-				Draw_Back();
+				Draw_Title();
 				Press_Start_prompt();
 			break;
 			case 1:
 				Draw_Background();
-				Put_Background(scroll_x, map_width);
+				Draw_Level_3DO();
+				/*Put_Background(scroll_x, map_width);*/
 				Put_Enemy();
 				Bullets();
 				Put_player();
@@ -49,7 +50,8 @@ int main(void)
 			break;
 			case 2:
 				Draw_Background();
-				Put_Background(scroll_x, map_width);
+				Draw_Level_3DO();
+				/*Put_Background(scroll_x, map_width);*/
 				Put_sprite(1, player.x, player.y, player.width, player.height, human_anim_spr[player.pickframe][player.frame]+player.flip);
 				Results_screen();
 			break;
@@ -84,26 +86,37 @@ void Load_Images(unsigned char level)
 			//Load_Background("DATA/title.bmp");
 		break;
 		case 1:
-			Clear_Image(4);
 			Load_Image(3,"DATA/bullet.bmp");
+			switch(level)
+			{
+				case 0:
+				Load_Image(5,"DATA/level1.bmp");
+				break;
+				case 1:
+				Load_Image(5,"DATA/level2.bmp");
+				break;
+				case 2:
+				Load_Image(5,"DATA/level3.bmp");
+				break;
+				case 3:
+				Load_Image(5,"DATA/level4.bmp");
+				break;
+			}
+			
 			if (level == 3) Load_Background("DATA/background2.bmp");
 			else Load_Background("DATA/background.bmp");
 		break;
 		case 2:
-			Clear_Image(4);
 			Load_Image(3,"DATA/bullet.bmp");
 		break;
 		case 3:
-			Clear_Image(4);
 			Load_Image(3,"DATA/instructions.bmp");
 			Load_Background("DATA/mission.bmp");
 		break;
 		case 4:
-			Clear_Image(4);
 			Load_Background("DATA/go.bmp");
 		break;
 		case 5:
-			Clear_Image(4);
 			Load_Background("DATA/end.bmp");
 		break;
 	}
@@ -113,14 +126,14 @@ void HUD()
 {
 	Print_text(0, 0, "HP");
 	Print_text(0, 16, itoa(player.hp));
-	/*Print_text(0, 32, "ENEMIES LEFT");
+	Print_text(0, 32, "ENEMIES LEFT");
 	Print_text(0, 48, itoa(enemies_left));
 	Print_text(272, 0, "SCORE");
-	Print_text(272, 16, itoa(score));*/
+	Print_text(272, 16, itoa(score));
 	if (enemies_left == 0) Change_game(2, current_level);
 }
 
-void Draw_Back()
+void Draw_Title()
 {
 	unsigned char i;
 	for(i=0;i<40;i++)
@@ -131,6 +144,18 @@ void Draw_Back()
 		Put_sprite(4, (i*8), 120, 8, 40, i+120);
 		Put_sprite(4, (i*8), 160, 8, 40, i+160);
 		Put_sprite(4, (i*8), 200, 8, 40, i+200);
+	}
+}
+
+void Draw_Level_3DO()
+{
+	unsigned char i, lim;
+	if (current_level == 3) lim = 13;
+	else lim = 10;
+	
+	for(i=0;i<lim;i++)
+	{
+		Put_sprite(5, (i*64)-scroll_x, 0, 64, 240, i);
 	}
 }
 
@@ -261,12 +286,12 @@ void Print_text(unsigned short x, unsigned char y, char *text_ex)
 {
 	unsigned char i = 0;
 	for (i=0;text_ex[i]!='\0';i++)
-		Put_sprite(100, x + (8 * i), y, 8, 8, text_ex[i]-33);
+		Put_sprite(6, x + (8 * i), y, 8, 8, text_ex[i]-33);
 }
 
 void Reset_default_values(unsigned char level)
 {
-	unsigned char i;
+	unsigned short i;
 	unsigned char player_truex;
 	
 	scroll_progress = 0;
@@ -281,9 +306,6 @@ void Reset_default_values(unsigned char level)
 	player.fallspeed = 3;
 	player.max_hp = 80;
 	player.hp = player.max_hp;
-	
-	if (collision_map) free(collision_map);
-	if (background_map) free(background_map);
 	
 	// player_truex is a hack, i need to find a proper solution to this...
 	switch(current_level)
@@ -300,10 +322,11 @@ void Reset_default_values(unsigned char level)
 			map_width = 40;
 			map_height = 15;
 			map_size = sizeof(map);
-			collision_map = malloc(map_size);
-			background_map = malloc(map_size);
-			memcpy(collision_map, map, map_size);
-			memcpy(background_map, map, map_size);
+			for(i=0;i<map_size;i++)
+			{
+				collision_map[i] = map[i];
+				background_map[i] = map[i];
+			}
 		break;
 		case 1:
 			player_truex = 34;
@@ -318,10 +341,11 @@ void Reset_default_values(unsigned char level)
 			map_width = 40;
 			map_height = 15;
 			map_size = sizeof(map2);
-			collision_map = malloc(map_size);
-			background_map = malloc(map_size);
-			memcpy(collision_map, map2, map_size);
-			memcpy(background_map, map2, map_size);
+			for(i=0;i<map_size;i++)
+			{
+				collision_map[i] = map2[i];
+				background_map[i] = map2[i];
+			}
 		break;
 		case 2:
 			player_truex = 19;
@@ -337,10 +361,11 @@ void Reset_default_values(unsigned char level)
 			map_width = 40;
 			map_height = 15;
 			map_size = sizeof(map3);
-			collision_map = malloc(map_size);
-			background_map = malloc(map_size);
-			memcpy(collision_map, map3, map_size);
-			memcpy(background_map, map3, map_size);
+			for(i=0;i<map_size;i++)
+			{
+				collision_map[i] = map3[i];
+				background_map[i] = map3[i];
+			}
 		break;
 		case 3:
 			player_truex = 2;
@@ -358,13 +383,15 @@ void Reset_default_values(unsigned char level)
 			map_width = 50;
 			map_height = 15;
 			map_size = sizeof(map4);
-			collision_map = malloc(map_size);
-			background_map = malloc(map_size);
-			memcpy(collision_map, map4, map_size);
-			memcpy(background_map, map4, map_size);
+			for(i=0;i<map_size;i++)
+			{
+				collision_map[i] = map4[i];
+				background_map[i] = map4[i];
+			}
 		break;
 	}
-		
+	
+
 	for(i=0;i<active_enemies;i++)
 	{
 		// Reset enemies x positions to their actual real ones as they were set (Place_Thing)
@@ -509,7 +536,6 @@ void Player()
 			{
 				player.isfiring = 1;
 				bullet_touse = 0;
-				Play_SFX(2);
 				while(1)
 				{
 					if (bullets[bullet_touse].active == 0)
@@ -529,6 +555,7 @@ void Player()
 						bullets[bullet_touse].player = 1;
 						bullets[bullet_touse].active = 1;
 						bullets[bullet_touse].speed = 8;
+						Play_SFX(2);
 						break;
 					}
 					else

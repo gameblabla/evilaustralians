@@ -5,7 +5,7 @@
 
 #define SIZE_TILE 16
 
-char *collision_map, *background_map;
+char collision_map[750], background_map[750];
 unsigned char game_mode;
 unsigned short map_width, map_height, map_size;
 short scroll_x, scroll_progress;
@@ -16,6 +16,8 @@ unsigned long score, highscore;
 
 unsigned short wait_tocontinue;
 unsigned short results_mode, results_wait;
+
+unsigned char startgame = 0;
 
 const unsigned char human_anim_spr[10][10] =
 {
@@ -123,7 +125,8 @@ void Put_Enemy();
 
 void Bullets();
 char* itoa(unsigned short n);
-void Draw_Back();
+void Draw_Title();
+void Draw_Level_3DO();
 
 
 /*

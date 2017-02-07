@@ -8,6 +8,7 @@
 *.bin
 txt1.txt
 txt2.txt
+opk/
 N64/
 N64
 src/*.o

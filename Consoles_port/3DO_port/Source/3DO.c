@@ -35,7 +35,7 @@ and to permit persons to whom the Software is furnished to do so, subject to the
 #include <controlpad.h>
 
 #define FPS_VIDEO 60
-#define MAX_IMAGE 512
+#define MAX_IMAGE 8
 
 #include <burger.h>
 #include <audio.h>
@@ -60,7 +60,6 @@ static TagArg SoundRateArgs[] = {
 	AF_TAG_SAMPLE_RATE,(void*)0,	/* Get the sample rate */
 	TAG_END,0		/* End of the list */
 };
-int32 sfx_data[MAX_SFX];
 
 #define SCREENS	2
 
@@ -96,7 +95,16 @@ static const int	sNumControlPads	= 1;
 #define Buttons_SELECT ControlRightShift
 #define Buttons_QUIT 0
 
-int	gCurrentScreen	= 0;
+unsigned char	gCurrentScreen	= 0;
+
+static int32 get_joystick_state()
+{
+	ControlPadEventData cpaddata;
+	cpaddata.cped_ButtonBits=0;
+	GetControlPad(1,0,&cpaddata);
+
+	return ( cpaddata.cped_ButtonBits );
+}
 
 void msleep(unsigned char milisec)
 {
@@ -104,6 +112,7 @@ void msleep(unsigned char milisec)
 
 void Init_video(char* argv[])
 {
+	unsigned char i;
 	/* Open the graphics folio */
 	CreateBasicDisplay(&TheScreen,DI_TYPE_DEFAULT, SCREENS);
 	/* Init the math folio (Required) */
@@ -112,6 +121,9 @@ void Init_video(char* argv[])
 	/* This disables interlacing and uses progressive scan instead */
 	DisableHAVG(TheScreen.sc_Screens[0]);
 	DisableVAVG(TheScreen.sc_Screens[0]);
+	/* Also disable interlacing for the second screen */
+	DisableHAVG(TheScreen.sc_Screens[1]);
+	DisableVAVG(TheScreen.sc_Screens[1]);
 	
 	/* Init my var */
 	NumFrameBufPages=TheScreen.sc_nFrameBufferPages;	
@@ -121,10 +133,21 @@ void Init_video(char* argv[])
 	spitem = GetVRAMIOReq();
 	
     InitControlPad(sNumControlPads);
+    
+    for(i=0;i<MAX_IMAGE;i++)
+    {
+		already_inmemory[i] = 0;
+	}
 }
 
 void Load_Background(char* directory)
 {
+	if (gBackground != NULL)
+	{
+		unsigned int iImageSize	= TheScreen.sc_nFrameByteCount;
+		FreeMem(gBackground, iImageSize);
+		gBackground	= NULL;
+	}
     gBackground	= (ubyte *)AllocMem((int)(TheScreen.sc_nFrameByteCount), MEMTYPE_STARTPAGE | MEMTYPE_VRAM | MEMTYPE_CEL);
     SetVRAMPages(spitem, gBackground, 0, TheScreen.sc_nFrameBufferPages, -1);
 	LoadImage(directory,  gBackground, (VdlChunk **)NULL, &TheScreen);
@@ -144,7 +167,7 @@ void Load_Image(unsigned short a, char* directory)
 		converted to CEL ANIM format where Width
 		and Height must be definied at convertion time.
 	*/
-	if (already_inmemory[a]) UnloadAnim(anim[a]);
+	if (already_inmemory[a] == 1) UnloadAnim(anim[a]);
 	anim[a] = LoadAnim(directory, MEMTYPE_CEL);
 	already_inmemory[a] = 1;
 }
@@ -202,26 +225,31 @@ void Draw_Rect(unsigned short x, unsigned short y, unsigned short width, unsigne
 
 void Controls()
 {
-	uint32	gButtons;
-	DoControlPad(1, &gButtons, (ControlUp | ControlDown | ControlLeft | ControlRight));
+	int32 joybits;
+	joybits = get_joystick_state();
+	/*uint32	gButtons;
+	DoControlPad(1, &gButtons, (ControlUp | ControlDown | ControlLeft | ControlRight));*/
 
-	BUTTON.UP 	= (gButtons & Buttons_UP)	 ? 1 : 0;
-	BUTTON.DOWN 	= (gButtons & Buttons_DOWN)	 ? 1 : 0;
-	BUTTON.LEFT 	= (gButtons & Buttons_LEFT)	 ? 1 : 0;
-	BUTTON.RIGHT 	= (gButtons & Buttons_RIGHT) ? 1 : 0;
+	BUTTON.UP 	= (joybits & Buttons_UP)	 ? 1 : 0;
+	BUTTON.DOWN 	= (joybits & Buttons_DOWN)	 ? 1 : 0;
+	BUTTON.LEFT 	= (joybits & Buttons_LEFT)	 ? 1 : 0;
+	BUTTON.RIGHT 	= (joybits & Buttons_RIGHT) ? 1 : 0;
 		
-	BUTTON.A 	= (gButtons & Buttons_A) ? 1 : 0;
-	BUTTON.B 	= (gButtons & Buttons_B) ? 1 : 0;
-	BUTTON.C 	= (gButtons & Buttons_C) ? 1 : 0;
-	BUTTON.D 	= (gButtons & Buttons_D) ? 1 : 0;
-	BUTTON.START 	= (gButtons & Buttons_START) ? 1 : 0;
-	BUTTON.SELECT 	= (gButtons & Buttons_SELECT) ? 1 : 0;	
+	BUTTON.A 	= (joybits & Buttons_A) ? 1 : 0;
+	BUTTON.B 	= (joybits & Buttons_B) ? 1 : 0;
+	BUTTON.C 	= (joybits & Buttons_C) ? 1 : 0;
+	BUTTON.D 	= (joybits & Buttons_D) ? 1 : 0;
+	BUTTON.START 	= (joybits & Buttons_START) ? 1 : 0;
+	BUTTON.SELECT 	= (joybits & Buttons_SELECT) ? 1 : 0;	
 }
 
 void Clear_Image(unsigned short a)
 {
-	if (already_inmemory[a]) UnloadAnim(anim[a]);
-	already_inmemory[a] = 0;
+	if (already_inmemory[a] == 1) 
+	{
+		UnloadAnim(anim[a]);
+		already_inmemory[a] = 0;
+	}
 }
 
 void Clear_Images()
@@ -258,19 +286,21 @@ void Load_Music(const char* directory)
 
 void Play_Music(int id, char loop)
 {
+	PlaySong(id);
 	PauseMusic();
 }
 
 void Load_SFX(unsigned char i, char* directory)
 {
-	AllSamples[i] = LoadSample(directory);
-	GetAudioItemInfo(AllSamples[i],SoundRateArgs);
-	AllRates[i] = (Word)(((LongWord)SoundRateArgs[0].ta_Arg)/(44100UL*2UL));	/* Get the DSP rate for the sound */	
+	AllSamples[i+1] = LoadSample(directory);
+	GetAudioItemInfo(AllSamples[i+1],SoundRateArgs);
+	AllRates[i+1] = (Word)(((LongWord)SoundRateArgs[0].ta_Arg)/(44100UL*2UL));	/* Get the DSP rate for the sound */	
 }
 
 void Play_SFX(unsigned char i)
 {
-	PlaySound(i);
+	StopSound(i+1);
+	PlaySound(i+1);
 }
 
 void Unload_SFX()
