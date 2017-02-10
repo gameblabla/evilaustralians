@@ -119,11 +119,11 @@ void Init_video(char* argv[])
 	OpenMathFolio();
 	
 	/* This disables interlacing and uses progressive scan instead */
-	DisableHAVG(TheScreen.sc_Screens[0]);
-	DisableVAVG(TheScreen.sc_Screens[0]);
+	/*DisableHAVG(TheScreen.sc_Screens[0]);
+	DisableVAVG(TheScreen.sc_Screens[0]);*/
 	/* Also disable interlacing for the second screen */
-	DisableHAVG(TheScreen.sc_Screens[1]);
-	DisableVAVG(TheScreen.sc_Screens[1]);
+	/*DisableHAVG(TheScreen.sc_Screens[1]);
+	DisableVAVG(TheScreen.sc_Screens[1]);*/
 	
 	/* Init my var */
 	NumFrameBufPages=TheScreen.sc_nFrameBufferPages;	
@@ -292,9 +292,9 @@ void Play_Music(int id, char loop)
 
 void Load_SFX(unsigned char i, char* directory)
 {
-	AllSamples[i+1] = LoadSample(directory);
-	GetAudioItemInfo(AllSamples[i+1],SoundRateArgs);
-	AllRates[i+1] = (Word)(((LongWord)SoundRateArgs[0].ta_Arg)/(44100UL*2UL));	/* Get the DSP rate for the sound */	
+	AllSamples[i] = LoadSample(directory);
+	GetAudioItemInfo(AllSamples[i],SoundRateArgs);
+	AllRates[i] = (Word)(((LongWord)SoundRateArgs[0].ta_Arg)/(44100UL*2UL));	/* Get the DSP rate for the sound */	
 }
 
 void Play_SFX(unsigned char i)
