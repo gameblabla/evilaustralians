@@ -1,7 +1,7 @@
 CC = mipsel-linux-gcc
-
-CFLAGS = -Ofast -Wall -I./WRAPPER -DSOUND_ENABLED
-LDFLAGS = `sdl-config --cflags --libs` -lSDL_mixer
+# For some reasons, -O1 and beyond miscompile the game
+CFLAGS = -O0 -mips32r2 -Wall -I./WRAPPER -DSOUND_ENABLED -DUNCAPPED
+LDFLAGS = -lSDL -lSDL_mixer -s -flto -Wl,--as-needed 
 DEFINES = -DSOUND_ENABLED
 OUTPUT = violent
 
@@ -10,6 +10,13 @@ OBJS = ${SOURCES:.c=.o}
 
 ${OUTPUT}:${OBJS}
 	${CC} -o ${OUTPUT} ${SOURCES} ${CFLAGS} ${LDFLAGS} ${DEFINES} 
+
+pack:
+	mv $(OUTPUT) ./opk/$(OUTPUT)
+	cp -r ./DATA ./opk/DATA
+	mksquashfs ./opk Evil_australians.opk -all-root -noappend -no-exports -no-xattrs
+	rm -r ./opk/DATA
+	rm ./opk/$(OUTPUT)
 	
 clean:
 	rm src/*.o

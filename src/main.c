@@ -1,12 +1,25 @@
+/*
+
+The MIT License (MIT)
+
+Copyright (c) 2017 Gameblabla
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), 
+to deal in the Software without restriction, 
+including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, 
+and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+*/
+
 #include "main.h" 
 #include "maps.h" 
 
 /* I must warn you : currently, the source code is a huge mess ! :P 
  * In addition to that, there are several bugs/limitations :
  * - Vertical maps are not supported (yet)
- * - Collision detection against the map is very slow
  * - There are some hacks
  * - Some functions could be merged together (like Player and Enemy)
+ * - It could be cleaned up
  * 
  * That aside, it was designed to be fairly portable thanks to my Gameblabal's Wrapper library.
  * The platforms supported are :
@@ -390,6 +403,11 @@ void Reset_default_values(unsigned char level)
 		bullets[i].x = 0;
 		bullets[i].y = 0;
 		bullets[i].col = 0;
+		bullets[i].speed = 0;
+		bullets[i].col = 0;
+		bullets[i].status = 0;
+		bullets[i].power = 0;
+		bullets[i].direction = 0;
 	}
 	enemies_left = active_enemies;
 }
@@ -1017,7 +1035,7 @@ void Bullets()
 			}
 			
 			/* If bullet is out of the map then destroy it */
-			if (bullets[i].x > map_width*16 || bullets[i].x < 0) bullets[i].col = 1;
+			if (bullets[i].x > (map_width*SIZE_TILE) || bullets[i].x < 0) bullets[i].col = 1;
 			
 			// Desactivate Bullet if it hits something
 			if (bullets[i].col == 1)
@@ -1039,7 +1057,7 @@ void Bullets()
 	We can convert a pixel-coordinate to map-coordinates by dividing by the tile's size in pixels.
 	because the tiles are square we can use the same function for x and y coordinates.
 */
-#define PIX_TO_MAP(x) ((x) / 16)
+#define PIX_TO_MAP(x) ((x) / SIZE_TILE)
 //#define PIX_TO_MAP(x) ((x)>>4)
 /* This converts a map-coordinate to an index of the map array. */
 #define MAP_TO_INDEX(x, y, a) ((y) * a + x)

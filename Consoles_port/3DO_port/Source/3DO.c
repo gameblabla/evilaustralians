@@ -114,7 +114,7 @@ void Init_video(char* argv[])
 {
 	unsigned char i;
 	/* Open the graphics folio */
-	CreateBasicDisplay(&TheScreen,DI_TYPE_DEFAULT, SCREENS);
+	CreateBasicDisplay(&TheScreen, DI_TYPE_DEFAULT, SCREENS);
 	/* Init the math folio (Required) */
 	OpenMathFolio();
 	

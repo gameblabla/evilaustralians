@@ -1,12 +1,25 @@
+/*
+
+The MIT License (MIT)
+
+Copyright (c) 2017 Gameblabla
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), 
+to deal in the Software without restriction, 
+including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, 
+and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+*/
+
 #include "main.h" 
 #include "maps.h" 
 
 /* I must warn you : currently, the source code is a huge mess ! :P 
  * In addition to that, there are several bugs/limitations :
  * - Vertical maps are not supported (yet)
- * - Collision detection against the map is very slow
  * - There are some hacks
  * - Some functions could be merged together (like Player and Enemy)
+ * - It could be cleaned up
  * 
  * That aside, it was designed to be fairly portable thanks to my Gameblabal's Wrapper library.
  * The platforms supported are :
@@ -499,8 +512,8 @@ void Player()
 			{
 				player.isfiring = 1;
 				bullet_touse = 0;
-				Play_SFX(2);
 				done_bullet = 1;
+				Play_SFX(2);
 				while(done_bullet)
 				{
 					if (bullets[bullet_touse].active == 0)
