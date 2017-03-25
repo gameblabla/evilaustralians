@@ -442,7 +442,7 @@ void Put_Background(short scroll_x, unsigned char size_tile_w)
 		{
 			tmp = c + (size_tile_w * r);
 			if (background_map[tmp] != 0) 
-			Put_sprite_hardware(2, (c*SIZE_TILE)-scroll_x, r*SIZE_TILE, SIZE_TILE, SIZE_TILE, 1);
+			Put_sprite(2, (c*SIZE_TILE)-scroll_x, r*SIZE_TILE, SIZE_TILE, SIZE_TILE, 1);
 		}
 	}
 }

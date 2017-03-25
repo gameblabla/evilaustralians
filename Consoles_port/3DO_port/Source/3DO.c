@@ -39,18 +39,17 @@ and to permit persons to whom the Software is furnished to do so, subject to the
 
 #include <burger.h>
 #include <audio.h>
-#include "types.h"
-#include "audio.h"
-#include "graphics.h"
-#include "effectshandler.h"
-#include "soundplayer.h"
+#include <types.h>
+#include <graphics.h>
+#include <effectshandler.h>
+#include <soundplayer.h>
 
-#include "music.h"
-#include "event.h"
-#include "operror.h"
-#include "filefunctions.h"
-#include "stdio.h"
-#include "stdlib.h"
+#include <music.h>
+#include <event.h>
+#include <operror.h>
+#include <filefunctions.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define MAX_SFX 16
 Item AllSamples[MAX_SFX];			/* Items to sound samples */
