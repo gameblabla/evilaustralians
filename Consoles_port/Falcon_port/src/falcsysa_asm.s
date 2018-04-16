@@ -96,12 +96,12 @@ VBL:
 	tst.l	_FS_VBLFuncPtr
 	beq.s	.noHook
 
-	move.l	#$FFFFFFFF,$FFFF9800.w
+	;move.l	#$FFFFFFFF,$FFFF9800.w
 	movem.l	a0-a2/d0-d2,-(a7)	; User function VBL Hook
 	move.l	_FS_VBLFuncPtr,a0
 	jsr	(a0)
 	movem.l	(a7)+,a0-a2/d0-d2
-	move.l	#0,$FFFF9800.w
+	;move.l	#0,$FFFF9800.w
 
 .noHook:
 	rte
