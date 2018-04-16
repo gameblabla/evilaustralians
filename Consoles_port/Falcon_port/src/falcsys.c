@@ -12,20 +12,21 @@ void	*FS_screenadrsP;
 void	*FS_screenadrsL;
 u16		FS_screenrez;
 void	*FS_superstack;
-void	*FS_STscreen[3];
-void	*FS_TTscreen;
+static void	*FS_STscreen[3];
+static void	*FS_TTscreen;
 u8		FS_CurrentScreen;
 u32		FS_Flags;
-short	FS_ScreenWidth;
-short	FS_ScreenHeight;
-short	FS_ScreenBpp;
-
+u16	FS_ScreenWidth;
+u16	FS_ScreenHeight;
+volatile u32  *FS_PalettePtr;
+static u8	FS_ScreenBpp;
 
 volatile u16		FS_VblAck;
 volatile u16		FS_SetNewScreen;
 volatile void	*FS_NewScreenAdrs;
 volatile u16		FS_Vmode;
-volatile u32		*FS_PalettePtr;
+
+extern  void Put_Background();
 
 volatile u16		FS_nFrames;
 volatile u8	IKBD_MouseB;		// Buttons Pressed
@@ -35,20 +36,20 @@ volatile u8	IKBD_Joystick0;
 volatile u8	IKBD_Joystick1;
 volatile u8	IKBD_Keyboard[128];	// Internal
 volatile void	(*FS_VBLFuncPtr)();	// Set this pointer to start a function during the VBL Interrupt (ex: sound mixer)
-
+static unsigned long SCREEN_SIZE;
 //---
 
-char	*FalconInit(u32 flags, u32 *pal)
+char	*FalconInit(u32 flags)
 {
 	unsigned char res;
 	FS_Flags = flags & OPT_MASK;
 	FS_Vmode = (u16)(flags & VM_MASK);
-	FS_PalettePtr = pal;
-	FS_VBLFuncPtr = NULL;
+	FS_PalettePtr = NULL;
 
 	FS_ScreenWidth = 320;
 	FS_ScreenHeight = 240;
 	FS_ScreenBpp = 16;
+	SCREEN_SIZE = ((FS_ScreenWidth * FS_ScreenHeight) * (FS_ScreenBpp / 8));
 	
 	// Alloc ST Screen
 	if (!(FS_STscreen[0] = Mxalloc(SCREEN_SIZE, MX_STRAM)))
@@ -72,6 +73,7 @@ char	*FalconInit(u32 flags, u32 *pal)
 		}
 
 	// Detect CT60 cookie if CT60_MODE set !
+	#ifdef _CT60
 	if (FS_Flags & CT60_MODE)
 	{
 		if (!Supexec(GetCT60Cookie))
@@ -98,6 +100,7 @@ char	*FalconInit(u32 flags, u32 *pal)
 			return ("");
 		}
 	}
+	#endif
 
 	// Save Current Screen & Palette
 	Supexec(SaveVidel);
@@ -106,8 +109,10 @@ char	*FalconInit(u32 flags, u32 *pal)
 	res = Supexec(SetVidel);
 	if (!res)
 	{
+		#ifdef _CT60
 		if (FS_Flags & CT60_MODE)
 			Mfree(FS_TTscreen);
+		#endif
 		if (FS_Flags & TRIPLE_BUFFER)
 			Mfree(FS_STscreen[2]);
 		if (FS_Flags & (DOUBLE_BUFFER | TRIPLE_BUFFER))
@@ -120,11 +125,13 @@ char	*FalconInit(u32 flags, u32 *pal)
 	Supexec(IKBD_Install);
 
 	// Setup CPU Flags for Max Speed
+	#ifdef _CT60
 	if ((FS_Flags & CT60_MODE) && (!(FS_Flags & EMULATOR_MODE)))
 	{
 		Supexec(CpuSaveState);
 		Supexec(CpuEnableFullCacheSuperscalar);
 	}
+	#endif
 
 	// Clear Screens
 	VFastClear32(FS_STscreen[0], SCREEN_SIZE, 0);
@@ -132,8 +139,10 @@ char	*FalconInit(u32 flags, u32 *pal)
 		VFastClear32(FS_STscreen[1], SCREEN_SIZE, 0);
 	if (FS_Flags & TRIPLE_BUFFER)
 		VFastClear32(FS_STscreen[2], SCREEN_SIZE, 0);
+	#ifdef _CT60
 	if (FS_Flags & CT60_MODE)
 		VFastClear32(FS_TTscreen, SCREEN_SIZE, 0);
+	#endif
 
 	// Set a Screen and Wait VSync
 	if (FS_Flags & TRIPLE_BUFFER)
@@ -142,10 +151,16 @@ char	*FalconInit(u32 flags, u32 *pal)
 		FS_NewScreenAdrs = FS_STscreen[1];
 	else
 		FS_NewScreenAdrs = FS_STscreen[0];
+		
+	#ifdef _CT60
 	FS_VblAck = 0;
+	#endif
 	FS_CurrentScreen = 0;
 	FS_SetNewScreen = 1;
+	
+	#ifdef _CT60
 	while (!FS_VblAck);
+	#endif
 
 	return (NULL);
 }
@@ -153,7 +168,9 @@ char	*FalconInit(u32 flags, u32 *pal)
 
 void	FalconLoop(int (*func)(void *screen))
 {
+	#ifdef _CT60
 	FS_VblAck = 0;
+	#endif
 
 	while (42)
 	{
@@ -162,12 +179,14 @@ void	FalconLoop(int (*func)(void *screen))
 		// C2P from TTRAM to STRAM (take about 70% of the VBL @ 60Hz)
 		// Optimized C2P is as fast as a raw planar 32bits copy
 		// This is due to STram being very slow
+		#ifdef _CT60
 		if (FS_Flags & CT60_MODE)
 		{
 			ret = func(FS_TTscreen);
 			VFastCopy32(FS_TTscreen, FS_STscreen[FS_CurrentScreen], SCREEN_SIZE);
 		}
 		else
+		#endif
 		{
 			ret = func(FS_STscreen[FS_CurrentScreen]);
 			FS_NewScreenAdrs = FS_STscreen[FS_CurrentScreen];
@@ -187,10 +206,12 @@ void	FalconLoop(int (*func)(void *screen))
 		FS_SetNewScreen = 1;
 
 		// Wait VBL
+		#ifdef _CT60
 		if (FS_Flags & FORCE_WAIT_VBL)
 			FS_VblAck = 0;
 		while (!FS_VblAck);
 		FS_VblAck = 0;
+		#endif
 
 		if (FS_Flags & EXIT_ON_SPACE_KEY)
 			if (IKBD_IsKeyPressed(IKBD_KEY_ESC))
@@ -202,16 +223,20 @@ void	FalconLoop(int (*func)(void *screen))
 void	FalconExit(void)
 {
 	// Restore CPU Flags
+	#ifdef _CT60
 	if ((FS_Flags & CT60_MODE) && (!(FS_Flags & EMULATOR_MODE)))
 		Supexec(CpuRestoreState);
+	#endif
 
 	// Restore Interrupts
 	Supexec(RestoreInterrupts);
 	Supexec(IKBD_Uninstall);
 
 	// Free Memory
+	#ifdef _CT60
 	if (FS_Flags & CT60_MODE)
 		Mfree(FS_TTscreen);
+	#endif
 	if (FS_Flags & TRIPLE_BUFFER)
 		Mfree(FS_STscreen[2]);
 	if (FS_Flags & (DOUBLE_BUFFER | TRIPLE_BUFFER))
@@ -224,6 +249,7 @@ void	FalconExit(void)
 
 // ----
 
+#ifdef _CT60
 LONG	GetCT60Cookie(void)
 {
 	volatile u32 *cookie = *(u32**)0x5A0;
@@ -237,6 +263,7 @@ LONG	GetCT60Cookie(void)
 
 	return (0);
 }
+#endif
 
 // ----
 /*

@@ -13,6 +13,7 @@ and to permit persons to whom the Software is furnished to do so, subject to the
 
 #include "main.h" 
 #include "maps.h" 
+#include "dma.h"
 
 u32* scr32;
 u16* scr;
@@ -33,7 +34,6 @@ u16* scr;
 BITMAP bmp[5];
 int Game(void* screen);
 
-
 int Game(void* screen)
 {
 	scr = (u16*)screen;
@@ -46,14 +46,14 @@ int Game(void* screen)
 			Press_Start_prompt();
 		break;
 		case 1:
-			Put_Background(scroll_x, map_width);
+			Put_Background();
 			Put_Enemy();
 			Bullets();
 			Put_player();
 			HUD();
 		break;
 		case 2:
-			Put_Background(scroll_x, map_width);
+			Put_Background();
 			DrawSprite_frame(&bmp[2], scr, player.x, player.y, human_anim_spr[player.pickframe][player.frame]+player.flip);
 			Results_screen();
 		break;
@@ -61,10 +61,8 @@ int Game(void* screen)
 			Missions_Graphics();
 		break;
 		case 4:
-			GO_screen();
-		break;
 		case 5:
-			END_screen();
+			GO_END_screen();
 		break;
 	}
 	return (FL_COPY);
@@ -78,15 +76,19 @@ int main(void)
 
 	err = FalconInit(VM_320x240_16BITS | TRIPLE_BUFFER | EXIT_ON_SPACE_KEY
 	#ifdef _CT60
-	| CT60_MODE | EMULATOR_MODE
+	| CT60_MODE | EMULATOR_MODE | FORCE_WAIT_VBL
 	#endif
-	, NULL);
+	);
+	DMA_Init();
 	Change_game(0, current_level);
 
 	FalconLoop(Game);
 	FalconExit();
 	
+	DMA_Uninit();
+	#ifndef NO_DSP
 	MP2_Stop();
+	#endif
 	
 	for(i=0;i<5;i++)
 		Free_BMP(bmp[i]);
@@ -100,64 +102,62 @@ void Load_Images(unsigned char level)
 	switch(game_mode)
 	{
 		case 0:
-			Load_BMP("title.gcb", &bmp[0], 0);
+			Load_BMP("DATA\\title.gcb", &bmp[0], 0);
 		break;
 		case 1:
-			Load_BMP("player.gcb", &bmp[2], 16);
-			Load_BMP("bullet.gcb", &bmp[4], 0);
+			Load_BMP("DATA\\player.gcb", &bmp[2], 16);
+			Load_BMP("DATA\\bullet.gcb", &bmp[4], 0);
 			switch(level)
 			{
 				case 0:
-					Load_BMP("l1.gcb", &bmp[0], 0);
+					Load_BMP("DATA\\l1.gcb", &bmp[0], 0);
 				break;
 				case 1:
-					Load_BMP("l2.gcb", &bmp[0], 0);
+					Load_BMP("DATA\\l2.gcb", &bmp[0], 0);
 				break;
 				case 2:
-					Load_BMP("l3.gcb", &bmp[0], 0);
+					Load_BMP("DATA\\l3.gcb", &bmp[0], 0);
 				break;
 				case 3:
-					Load_BMP("l4.gcb", &bmp[0], 0);
+					Load_BMP("DATA\\l4.gcb", &bmp[0], 0);
 				break;
 			}
 		break;
 		case 2:
-			Load_BMP("player.gcb", &bmp[2], 16);
-			Load_BMP("bullet.gcb", &bmp[4], 0);
+			Load_BMP("DATA\\player.gcb", &bmp[2], 16);
+			Load_BMP("DATA\\bullet.gcb", &bmp[4], 0);
 		break;
 		case 3:
-			Load_BMP("player.gcb", &bmp[2], 16);
-			Load_BMP("inst.gcb", &bmp[4], 0);
-			Load_BMP("miss.gcb", &bmp[0], 0);
+			Load_BMP("DATA\\player.gcb", &bmp[2], 16);
+			Load_BMP("DATA\\inst.gcb", &bmp[4], 0);
+			Load_BMP("DATA\\miss.gcb", &bmp[0], 0);
 		break;
 		case 4:
-			Load_BMP("go.gcb", &bmp[0], 0);
+			Load_BMP("DATA\\go.gcb", &bmp[0], 0);
 		break;
 		case 5:
-			Load_BMP("end.gcb", &bmp[0], 0);
+			Load_BMP("DATA\\end.gcb", &bmp[0], 0);
 		break;
 	}
 
-	Load_BMP("font.gcb", &bmp[1], 8);
+	Load_BMP("DATA\\font.gcb", &bmp[1], 8);
 }
 
 
-struct main_player Place_thing(unsigned char tile_x, unsigned char tile_y, struct main_player toput, unsigned char playerornot, unsigned char direction, unsigned char flip)
+void Place_thing(unsigned char tile_x, unsigned char tile_y, struct main_player* toput, unsigned char playerornot, unsigned char direction, unsigned char flip)
 {
 	if (playerornot == 1)
 	{
-		toput.x = 144;
+		toput->x = 144;
 		scroll_x = (tile_x * SIZE_TILE)-144;
 	}
 	else
 	{
-		toput.x = (tile_x * SIZE_TILE)+96;
+		toput->x = (tile_x * SIZE_TILE)+96;
 	}
-	toput.y = tile_y * SIZE_TILE;
-	toput.direction = direction;
-	toput.flip = flip;
-	
-	return toput;
+	toput->y = tile_y * SIZE_TILE;
+	toput->direction = direction;
+	toput->flip = flip;
 }
 
 
@@ -232,44 +232,67 @@ void Change_game(unsigned char mode, unsigned char level)
 			Play_Music(2);
 		break;
 	}
-
-	
 }
 
 void Play_Music(unsigned char song)
 {
 	char* err;
-	unsigned char loop;
-	
+	unsigned char loop, dsp;
+
+	DMA_Stop();
+	#ifndef NO_DSP
 	MP2_Stop();
+	dsp = 1;
+	#endif
+	loop = 1;
 	switch(song)
 	{
 		case 0:
-			err = MP2_Load("MUS/auss.mp2");
-			loop = 1;
+			#ifndef NO_DSP
+				err = MP2_Load("MUS\\auss.mp2");
+			#else
+				Sound_Load("MUS\\auss.raw");
+			#endif
 		break;
 		case 1:
-			err = MP2_Load("MUS/batt.mp2");
-			loop = 1;
+			Sound_Load("MUS\\batt.raw");
+			dsp = 0;
 		break;
 		case 2:
-			err = MP2_Load("MUS/end.mp2");
-			loop = 1;
+			#ifndef NO_DSP
+				err = MP2_Load("MUS\\end.mp2");
+			#else
+				Sound_Load("MUS\\end.raw");
+			#endif
 		break;
 		case 3:
-			err = MP2_Load("MUS/inst.mp2");
+			#ifndef NO_DSP
+				err = MP2_Load("MUS\\inst.mp2");
+			#else
+				Sound_Load("MUS\\inst.raw");
+			#endif
 			loop = 0;
 		break;
 		case 4:
-			err = MP2_Load("MUS/hero.mp2");
-			loop = 1;
+			Sound_Load("MUS\\hero.raw");
+			dsp = 0;
 		break;
 		case 5:
-			err = MP2_Load("MUS/win.mp2");
+			#ifndef NO_DSP
+				err = MP2_Load("MUS\\win.mp2");
+			#else
+				Sound_Load("MUS\\win.raw");
+			#endif
 			loop = 0;
 		break;
 	}
-	MP2_Start(loop);
+	
+	#ifndef NO_DSP
+	if (dsp == 1)
+		MP2_Start(loop);
+	else
+	#endif
+	DMA_Play(loop);
 }
 
 
@@ -297,69 +320,69 @@ void Reset_default_values(unsigned char level)
 		case 0:
 			player_truex = 2;
 			active_enemies = 5;
-			player = Place_thing(player_truex, 10, player, 1, 0, 0);
-			enemies[0] = Place_thing(21, 10, enemies[0], 0, 2, 0);
-			enemies[1] = Place_thing(31, 8, enemies[1], 0, 2, 20);
-			enemies[2] = Place_thing(29, 2, enemies[2], 0, 2, 0);
-			enemies[3] = Place_thing(4, 3, enemies[3], 0, 2, 0);
-			enemies[4] = Place_thing(38, 6, enemies[4], 0, 2, 20);
+			Place_thing(player_truex, 10, &player, 1, 0, 0);
+			Place_thing(21, 10, &enemies[0], 0, 2, 0);
+			Place_thing(31, 8, &enemies[1], 0, 2, 20);
+			Place_thing(29, 2, &enemies[2], 0, 2, 0);
+			Place_thing(4, 3, &enemies[3], 0, 2, 0);
+			Place_thing(38, 6, &enemies[4], 0, 2, 20);
 			map_width = 40;
 			map_height = 15;
 			map_size = sizeof(map);
-			collision_map = map;
-			background_map = map;
+			collision_map = (unsigned char*)map;
+			background_map = (unsigned char*)map;
 		break;
 		case 1:
 			player_truex = 34;
 			active_enemies = 6;
-			player = Place_thing(player_truex, 4, player, 1, 0, 0);
-			enemies[0] = Place_thing(6, 4, enemies[0], 0, 2, 20);
-			enemies[1] = Place_thing(12, 7, enemies[1], 0, 2, 20);
-			enemies[2] = Place_thing(14, 11, enemies[2], 0, 2, 20);
-			enemies[3] = Place_thing(24, 7, enemies[3], 0, 2, 20);
-			enemies[4] = Place_thing(27, 11, enemies[4], 0, 2, 20);
-			enemies[5] = Place_thing(33, 9, enemies[5], 0, 2, 20);
+			Place_thing(player_truex, 4, &player, 1, 0, 0);
+			Place_thing(6, 4, &enemies[0], 0, 2, 20);
+			Place_thing(12, 7, &enemies[1], 0, 2, 20);
+			Place_thing(14, 11, &enemies[2], 0, 2, 20);
+			Place_thing(24, 7, &enemies[3], 0, 2, 20);
+			Place_thing(27, 11, &enemies[4], 0, 2, 20);
+			Place_thing(33, 9, &enemies[5], 0, 2, 20);
 			map_width = 40;
 			map_height = 15;
 			map_size = sizeof(map2);
-			collision_map = map2;
-			background_map = map2;
+			collision_map = (unsigned char*)map2;
+			background_map = (unsigned char*)map2;
 		break;
 		case 2:
 			player_truex = 19;
 			active_enemies = 7;
-			player = Place_thing(player_truex, 0, player, 1, 0, 0);
-			enemies[0] = Place_thing(6, 4, enemies[0], 0, 2, 0);
-			enemies[1] = Place_thing(10, 4, enemies[1], 0, 2, 0);
-			enemies[2] = Place_thing(32, 4, enemies[2], 0, 2, 20);
-			enemies[3] = Place_thing(15, 8, enemies[3], 0, 2, 20);
-			enemies[4] = Place_thing(23, 8, enemies[4], 0, 2, 20);
-			enemies[5] = Place_thing(34, 11, enemies[5], 0, 2, 20);
-			enemies[6] = Place_thing(1, 11, enemies[6], 0, 2, 0);
+			Place_thing(player_truex, 0, &player, 1, 0, 0);
+			Place_thing(6, 4, &enemies[0], 0, 2, 0);
+			Place_thing(10, 4, &enemies[1], 0, 2, 0);
+			Place_thing(32, 4, &enemies[2], 0, 2, 20);
+			Place_thing(15, 8, &enemies[3], 0, 2, 20);
+			Place_thing(23, 8, &enemies[4], 0, 2, 20);
+			Place_thing(34, 11, &enemies[5], 0, 2, 20);
+			Place_thing(1, 11, &enemies[6], 0, 2, 0);
 			map_width = 40;
 			map_height = 15;
 			map_size = sizeof(map3);
-			collision_map = map3;
-			background_map = map3;
+			collision_map = (unsigned char*)map3;
+			background_map = (unsigned char*)map3;
 		break;
 		case 3:
 			player_truex = 2;
 			active_enemies = 9;
-			player = Place_thing(player_truex, 1, player, 1, 0, 0);
-			enemies[0] = Place_thing(9, 5, enemies[0], 0, 2, 20);
-			enemies[1] = Place_thing(15, 5, enemies[1], 0, 2, 20);
-			enemies[2] = Place_thing(22, 5, enemies[2], 0, 2, 20);
-			enemies[3] = Place_thing(27, 5, enemies[3], 0, 2, 20);
-			enemies[4] = Place_thing(32, 5, enemies[4], 0, 2, 20);
-			enemies[5] = Place_thing(36, 3, enemies[5], 0, 2, 0);
-			enemies[6] = Place_thing(40, 9, enemies[6], 0, 2, 20);
-			enemies[7] = Place_thing(43, 8, enemies[7], 0, 2, 0);
-			enemies[8] = Place_thing(47, 3, enemies[8], 0, 2, 20);
+			Place_thing(player_truex, 1, &player, 1, 0, 0);
+			Place_thing(9, 5, &enemies[0], 0, 2, 20);
+			Place_thing(15, 5, &enemies[1], 0, 2, 20);
+			Place_thing(22, 5, &enemies[2], 0, 2, 20);
+			Place_thing(27, 5, &enemies[3], 0, 2, 20);
+			Place_thing(32, 5, &enemies[4], 0, 2, 20);
+			Place_thing(36, 3, &enemies[5], 0, 2, 0);
+			Place_thing(40, 9, &enemies[6], 0, 2, 20);
+			Place_thing(43, 8, &enemies[7], 0, 2, 0);
+			Place_thing(47, 3, &enemies[8], 0, 2, 20);
 			map_width = 50;
 			map_height = 15;
 			map_size = sizeof(map4);
-			collision_map = map4;
-			background_map = map4;
+			collision_map = (unsigned char*)map4;
+			background_map = (unsigned char*)map4;
 		break;
 	}
 		
@@ -393,7 +416,7 @@ void Reset_default_values(unsigned char level)
 		enemies[i].incollision[4] = 0;
 	}
 	
-	for(i=0;i<32;i++)
+	for(i=0;i<16;i++)
 	{
 		bullets[i].active = 0;
 		bullets[i].x = 0;
@@ -422,7 +445,7 @@ void Missions_Graphics()
 	
 	if (wait < 20)
 	{
-		 DrawSprite(&bmp[4], scr, 60, 5);
+		 DrawSprite_NoChecks_frame(&bmp[4], scr, 60, 5,0);
 	}
 		 
 	else if (wait > 40) wait = 0;
@@ -449,7 +472,6 @@ void Results_screen()
 				nohit = 0;
 			}
 			results_mode = 1;
-			//Play_SFX(3);
 		break;
 		case 1:
 			results_wait++;
@@ -459,7 +481,7 @@ void Results_screen()
 			
 			if (results_wait > 90)
 			{
-				if (nohit) Print_text(144, 140, "PERFECT !");
+				if (nohit) Print_text(128, 140, "PERFECT !");
 				else Print_text(62, 140, "PREPARE FOR THE NEXT MISSION");
 			}
 			
@@ -475,11 +497,11 @@ void Results_screen()
 	
 }
 
-void GO_screen()
+void GO_END_screen()
 {
 	Draw_BMP_Big(bmp[0].data, bmp[0].tsize);
 	results_wait++;
-	if (results_wait > 360 || (results_wait > 120 && IKBD_IsKeyPressed(IKBD_KEY_SPACE) || IKBD_Joystick1 & IKBD_JOY_FIRE || IKBD_Joystick0 & IKBD_JOY_FIRE))
+	if (results_wait > 60 && (IKBD_IsKeyPressed(IKBD_KEY_SPACE) || IKBD_Joystick1 & IKBD_JOY_FIRE || IKBD_Joystick0 & IKBD_JOY_FIRE))
 	{
 		if (score > highscore) 
 		{
@@ -492,59 +514,14 @@ void GO_screen()
 	
 }
 
-void END_screen()
-{
-	Draw_BMP_Big(bmp[0].data, bmp[0].tsize);
-	results_wait++;
-	if (results_wait > 120 && IKBD_IsKeyPressed(IKBD_KEY_SPACE) || IKBD_Joystick1 & IKBD_JOY_FIRE || IKBD_Joystick0 & IKBD_JOY_FIRE)
-	{
-		if (score > highscore) 
-		{
-			highscore = score;
-		}
-		score = 0;
-		current_level = 0;
-		Change_game(0, current_level);
-	}
-	
-}
-
-
-void Put_Background(short scroll_x, unsigned char size_tile_w)
+void Put_Background()
 {
 	Notrans_DrawSprite_NoChecks_scroll(&bmp[0], scr, abs(scroll_x+160));
-	
-	
-	/*
-	 * TILE MAPPING IS WAY TOO SLOW ON THE ATARI FALCON
-	 * We have plenty of memory available so let's just scroll through
-	 * a huge picture instead.
-	 * 
-	unsigned char c, r;
-	unsigned short tmp;
-	unsigned char drawlimit[2];
-	
-	drawlimit[0] = 0;
-	if (scroll_x > 0) drawlimit[0] = ((scroll_x)/16);
-	drawlimit[1] = drawlimit[0]+21;
-	if (drawlimit[1] > size_tile_w) drawlimit[1] = size_tile_w;
-
-	for (c = drawlimit[0]; c < drawlimit[1]; c++) 
-	{
-		r = 15;
-		while(r--)
-		{
-			tmp = c + (size_tile_w * r);
-			if (background_map[tmp] != 0) 
-			Notrans_DrawSprite_noheightcheck(&bmp[3], scr, (c*SIZE_TILE)-scroll_x, r*SIZE_TILE);
-		}
-	}*/
 }
-
 
 void Put_player()
 {
-	player = Animation_sprite(player);
+	Animation_sprite(&player);
 	DrawSprite_frame(&bmp[2], scr,  player.x, player.y, human_anim_spr[player.pickframe][player.frame]+player.flip);
 	Player();
 }
@@ -552,13 +529,14 @@ void Put_player()
 void Put_Enemy()
 {
 	unsigned char i;
-	for(i=0;i<active_enemies;i++)
+	i = active_enemies;
+	while(i--)
 	{
 		if (enemies[i].active)
 		{
-			enemies[i] = Animation_sprite(enemies[i]);
-			enemies[i] = Enemy_AI(enemies[i], player);
-			enemies[i] = Enemy(enemies[i], i, player);
+			Animation_sprite(&enemies[i]);
+			Enemy_AI(&enemies[i], &player);
+			Enemy(&enemies[i], i, &player);
 			DrawSprite_frame(&bmp[2], scr, enemies[i].x, enemies[i].y, human_anim_spr[enemies[i].pickframe][enemies[i].frame]+enemies[i].flip);
 		}
 	}
@@ -594,6 +572,7 @@ void Player()
 			{
 				player.isfiring = 1;
 				bullet_touse = 0;
+				Dosound(shoot_snd);
 				//Play_SFX(2);
 				while(1)
 				{
@@ -730,300 +709,294 @@ void Player()
 	}
 }
 
-struct main_player Animation_sprite(struct main_player pp)
+void Animation_sprite(struct main_player* pp)
 {
-	pp.time++;
-	if (pp.time > human_anim_spr_delay[pp.pickframe])
+	pp->time++;
+	if (pp->time > human_anim_spr_delay[pp->pickframe])
 	{
-		pp.time = 0;
-		pp.frame += 1;
-		if (human_anim_spr[pp.pickframe][pp.frame] == 127) pp.frame = 0;
-		if (pp.isfiring) pp.isfiring = 0;
+		pp->time = 0;
+		pp->frame += 1;
+		if (human_anim_spr[pp->pickframe][pp->frame] == 127) pp->frame = 0;
+		if (pp->isfiring) pp->isfiring = 0;
 	}
 	
-	if (pp.state == 3)
+	if (pp->state == 3)
 	{
-		if (pp.pickframe != 7) 
+		if (pp->pickframe != 7) 
 		{
-			pp.pickframe = 7;
-			pp.frame = 0;
-			pp.time = 0;
+			pp->pickframe = 7;
+			pp->frame = 0;
+			pp->time = 0;
 		}
 	}
-	else if (pp.hit > 0)
+	else if (pp->hit > 0)
 	{
-		if (pp.pickframe != 6) 
+		if (pp->pickframe != 6) 
 		{
-			pp.pickframe = 6;
-			pp.frame = 0;
-			pp.time = 0;
+			pp->pickframe = 6;
+			pp->frame = 0;
+			pp->time = 0;
 		}
-		pp.hit-=5;
+		pp->hit-=5;
 	}
-	else if (pp.isfiring)
+	else if (pp->isfiring)
 	{
-		if (pp.moving)
+		if (pp->moving)
 		{
-			if (pp.pickframe != 5) 
+			if (pp->pickframe != 5) 
 			{
-				pp.pickframe = 5;
-				if (pp.frame > 5) pp.frame = 0;
-				pp.time = 0;
+				pp->pickframe = 5;
+				if (pp->frame > 5) pp->frame = 0;
+				pp->time = 0;
 			}	
 		}
 		else
 		{
-			if (pp.pickframe != 3) 
+			if (pp->pickframe != 3) 
 			{
-				pp.pickframe = 3;
-				if (pp.frame > 2) pp.frame = 0;
-				pp.time = 0;
+				pp->pickframe = 3;
+				if (pp->frame > 2) pp->frame = 0;
+				pp->time = 0;
 			}
 		}
 	}
-	else if (pp.state == 0)
+	else if (pp->state == 0)
 	{
-		if (pp.pickframe != 2) 
+		if (pp->pickframe != 2) 
 		{
-			pp.pickframe = 2;
-			pp.frame = 0;
-			pp.time = 0;
+			pp->pickframe = 2;
+			pp->frame = 0;
+			pp->time = 0;
 		}
 	}
-	else if (pp.moving)
+	else if (pp->moving)
 	{
-		if (pp.pickframe != 1) 
+		if (pp->pickframe != 1) 
 		{
-			pp.pickframe = 1;
-			pp.frame = 0;
-			pp.time = 0;
+			pp->pickframe = 1;
+			pp->frame = 0;
+			pp->time = 0;
 		}
 	}
 	else
 	{
-		if (pp.pickframe != 0) 
+		if (pp->pickframe != 0) 
 		{
-			pp.pickframe = 0;
-			pp.frame = 0;
-			pp.time = 0;
+			pp->pickframe = 0;
+			pp->frame = 0;
+			pp->time = 0;
 		}
 	}
-	
-	return pp;
 }
 
-struct main_player Enemy(struct main_player enemy, unsigned char id, struct main_player pp)
+void Enemy(struct main_player* enemy, unsigned char id, struct main_player* pp)
 {
 	unsigned char bullet_touse = 0;
-	enemy.oldx = enemy.x;
-	enemy.oldy = enemy.y;
-	enemy.tojump = 0;
+	enemy->oldx = enemy->x;
+	enemy->oldy = enemy->y;
+	enemy->tojump = 0;
 	
-	enemy.x = enemy.x - scroll_progress;
-	if (enemy.y > 240) 
+	enemy->x = enemy->x - scroll_progress;
+	if (enemy->y > 240) 
 	{
 		enemies_left -= 1;
 		score += 300;
-		enemy.active = 0;
+		enemy->active = 0;
 	}	
 		
 	// State equals 3 means that the enemy is dead DEAD DED MEAT
-	if (enemy.state == 3)
+	if (enemy->state == 3)
 	{
-		enemy.y += 4;
+		enemy->y += 4;
 	}
 	else
 	{	
-		switch(enemy.direction)
+		switch(enemy->direction)
 		{
 				case 1:
-					enemy.flip = 0;
-					enemy.x += (enemy.speed);
-					enemy.incollision[0] = Collisions_MAP(enemy.x + (enemy.width+1), enemy.y, 1, 22);
-					enemy.moving = 1;
+					enemy->flip = 0;
+					enemy->x += (enemy->speed);
+					enemy->incollision[0] = Collisions_MAP(enemy->x + (enemy->width+1), enemy->y, 1, 22);
+					enemy->moving = 1;
 				break;
 				case 0:
-					enemy.flip = 20;
-					enemy.x -= (enemy.speed);
-					enemy.incollision[0] = Collisions_MAP(enemy.x, enemy.y, 1, 22);
-					enemy.moving = 1;
+					enemy->flip = 20;
+					enemy->x -= (enemy->speed);
+					enemy->incollision[0] = Collisions_MAP(enemy->x, enemy->y, 1, 22);
+					enemy->moving = 1;
 				break;
 				case 2:
-					enemy.moving = 0;
+					enemy->moving = 0;
 				break;
 		}
 
-		if (enemy.isfiring)
+		if (enemy->isfiring)
 		{
 			bullet_touse = 6+id;
 			if (bullets[bullet_touse].active == 0)
 			{
 				bullets[bullet_touse].active = 1;
-				if (enemy.flip == 0)
+				if (enemy->flip == 0)
 				{
-					bullets[bullet_touse].x = enemy.x+enemy.width;
+					bullets[bullet_touse].x = enemy->x+enemy->width;
 					bullets[bullet_touse].direction = 0;
 				}
 				else
 				{
-					bullets[bullet_touse].x = enemy.x;
+					bullets[bullet_touse].x = enemy->x;
 					bullets[bullet_touse].direction = 1;
 				}
-				bullets[bullet_touse].y = enemy.y+11;
+				bullets[bullet_touse].y = enemy->y+11;
 				bullets[bullet_touse].power = 4;
 				bullets[bullet_touse].player = 0;
 				bullets[bullet_touse].speed = 4;
 				//Play_SFX(4);
 			}
-			enemy.isfiring = 0;
+			enemy->isfiring = 0;
 		}
 
 		// Character is falling (or on ground)
-		switch(enemy.state)
+		switch(enemy->state)
 		{
 			case 2:
-				enemy.y += enemy.fallspeed;
-				enemy.incollision[1] = Collisions_MAP(enemy.x+6, enemy.y, 10, enemy.height+1);
-				if (enemy.incollision[1] == 1) 
+				enemy->y += enemy->fallspeed;
+				enemy->incollision[1] = Collisions_MAP(enemy->x+6, enemy->y, 10, enemy->height+1);
+				if (enemy->incollision[1] == 1) 
 				{
-					while(enemy.incollision[1]==1)
+					while(enemy->incollision[1]==1)
 					{
-						enemy.y -= 1;
-						enemy.incollision[1] = Collisions_MAP(enemy.x+6, enemy.y, 10, enemy.height);
+						enemy->y -= 1;
+						enemy->incollision[1] = Collisions_MAP(enemy->x+6, enemy->y, 10, enemy->height);
 					}
-					enemy.state = 1;
-					enemy.incollision[1] = 0;
+					enemy->state = 1;
+					enemy->incollision[1] = 0;
 				}
 			break;
 			case 1:
-				enemy.incollision[1] = Collisions_MAP(enemy.x+6, enemy.y, 10, enemy.height);
-				if (enemy.jump)
+				enemy->incollision[1] = Collisions_MAP(enemy->x+6, enemy->y, 10, enemy->height);
+				if (enemy->jump)
 				{
-					enemy.state = 0;
-					enemy.incollision[1] = 0;
+					enemy->state = 0;
+					enemy->incollision[1] = 0;
 				}
-				else if (enemy.incollision[1] == 0) 
+				else if (enemy->incollision[1] == 0) 
 				{
-					enemy.state = 2;
-					enemy.incollision[1] = 0;
+					enemy->state = 2;
+					enemy->incollision[1] = 0;
 				}
 			break;
 			case 0:
-				enemy.incollision[4] = Collisions_MAP(enemy.x+6, enemy.y, 10, 1);
-				enemy.y = enemy.y - enemy.fallspeed;
-				enemy.jumptime++;
+				enemy->incollision[4] = Collisions_MAP(enemy->x+6, enemy->y, 10, 1);
+				enemy->y = enemy->y - enemy->fallspeed;
+				enemy->jumptime++;
 				
-				if (enemy.jumptime > 20) 
+				if (enemy->jumptime > 20) 
 				{
-					enemy.jumptime = 0;
-					enemy.state = 2;
-					enemy.jump = 0;
-					enemy.tojump = 0;
+					enemy->jumptime = 0;
+					enemy->state = 2;
+					enemy->jump = 0;
+					enemy->tojump = 0;
 				}
 				
 				// If Player is hitting the celling, make it fall
-				if (enemy.incollision[4] == 1) 
+				if (enemy->incollision[4] == 1) 
 				{
-					enemy.y = enemy.oldy;
-					while (enemy.incollision[4])
+					enemy->y = enemy->oldy;
+					while (enemy->incollision[4])
 					{
-						enemy.incollision[4] = Collisions_MAP(enemy.x+6, enemy.y, 10, 1);
-						enemy.y += 1;
+						enemy->incollision[4] = Collisions_MAP(enemy->x+6, enemy->y, 10, 1);
+						enemy->y += 1;
 					}
-					enemy.jumptime = 21;
+					enemy->jumptime = 21;
 				}
 			break;
 		}
 		
-		if (enemy.incollision[0] == 1) 
+		if (enemy->incollision[0] == 1) 
 		{
-			enemy.x = enemy.oldx;
-			switch(enemy.direction)
+			enemy->x = enemy->oldx;
+			switch(enemy->direction)
 			{
 				case 0:
-				while (enemy.incollision[0])
+				while (enemy->incollision[0])
 				{
-					enemy.incollision[0] = Collisions_MAP(enemy.x, enemy.y, 0, 22);
-					if (enemy.incollision[0] == 1) enemy.x += 1;
+					enemy->incollision[0] = Collisions_MAP(enemy->x, enemy->y, 0, 22);
+					if (enemy->incollision[0] == 1) enemy->x += 1;
 				}
 				break;
 				case 1:
-				while (enemy.incollision[0])
+				while (enemy->incollision[0])
 				{
-					enemy.incollision[0] = Collisions_MAP(enemy.x + (enemy.width+1), enemy.y, 0, 22);
-					if (enemy.incollision[0] == 1) enemy.x -= 1;
+					enemy->incollision[0] = Collisions_MAP(enemy->x + (enemy->width+1), enemy->y, 0, 22);
+					if (enemy->incollision[0] == 1) enemy->x -= 1;
 				}
 				break;
 			}
-			enemy.tojump = 1;
+			enemy->tojump = 1;
 		}
 		
 
-		if (enemy.hp < 1)
+		if (enemy->hp < 1)
 		{
 			//Play_SFX(1);
-			enemy.state = 3;
+			enemy->state = 3;
 		}
 	}
-		
-	return enemy;
 }
 
-struct main_player Enemy_AI(struct main_player enemy, struct main_player playertofollow)
+void Enemy_AI(struct main_player* enemy, struct main_player* playertofollow)
 {
 	short distance_x, distance_y;
-	distance_x = playertofollow.x - enemy.x;
-	distance_y = playertofollow.y - enemy.y;
+	distance_x = playertofollow->x - enemy->x;
+	distance_y = playertofollow->y - enemy->y;
 
 	if (distance_y > -50 && distance_y < 50)
 	{
-		switch(enemy.flip)
+		switch(enemy->flip)
 		{
 			case 0:
 			if (distance_x > -20)
 			{
-				enemy.sighted = 1;
+				enemy->sighted = 1;
 			}
 			break;
 			case 20:
 			if (distance_x > -150 && distance_x < 40)
 			{
-				enemy.sighted = 1;
+				enemy->sighted = 1;
 			}
 			break;
 		}
 	}
 	
-	enemy.latency++;
-	if (enemy.latency > 20 && enemy.sighted == 1)
+	enemy->latency++;
+	if (enemy->latency > 20 && enemy->sighted == 1)
 	{
-		if (enemy.hit > 0)
+		if (enemy->hit > 0)
 		{
-			enemy.direction = 2;
+			enemy->direction = 2;
 		}
-		else if (playertofollow.x < enemy.x)
+		else if (playertofollow->x < enemy->x)
 		{
-			enemy.direction = 0;
+			enemy->direction = 0;
 		}
-		else if (playertofollow.x > enemy.x)
+		else if (playertofollow->x > enemy->x)
 		{
-			enemy.direction = 1;
-		}
-		
-		if (enemy.tojump)
-		{
-			enemy.jump = 1;
+			enemy->direction = 1;
 		}
 		
-		if (player.state == 3)
-			enemy.direction = 2;
+		if (enemy->tojump)
+		{
+			enemy->jump = 1;
+		}
+		
+		if (playertofollow->state == 3)
+			enemy->direction = 2;
 		else
-			enemy.isfiring = 1;
+			enemy->isfiring = 1;
 
-		enemy.latency = 0;
+		enemy->latency = 0;
 	}
-		
-	return enemy;
 }
 
 void Bullets()
@@ -1031,7 +1004,8 @@ void Bullets()
 	unsigned char i, a;
 	
 	// Loops between all the bullets
-	for(i=0;i<16;i++)
+	i = 16;
+	while(i--)
 	{
 		// Only activate all the conditions and logic if bullet is enabled
 		if (bullets[i].active)

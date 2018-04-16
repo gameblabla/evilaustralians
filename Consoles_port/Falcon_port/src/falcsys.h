@@ -41,7 +41,6 @@
 #define	SCREEN_WIDTH	FS_ScreenWidth
 #define	SCREEN_HEIGHT	FS_ScreenHeight
 #define	SCREEN_BPP		FS_ScreenBpp
-#define	SCREEN_SIZE		(FS_ScreenWidth * FS_ScreenHeight * (FS_ScreenBpp / 8))
 
 #define	MSEC_TO_TIMER(a)	((a) / (1000 / 200))
 
@@ -109,11 +108,10 @@
 
 extern	volatile	u16		FS_nFrames;
 extern	volatile	u32		FS_Timer200Hz;
-extern				short	FS_ScreenWidth;
-extern				short	FS_ScreenHeight;
-extern				short	FS_ScreenBpp;
-extern				void	*FS_STscreen[3];
-extern				void	*FS_TTscreen;
+extern				u16	FS_ScreenWidth;
+extern				u16	FS_ScreenHeight;
+//extern				void	*FS_STscreen[3];
+//extern				void	*FS_TTscreen;
 extern	volatile	void	(*FS_VBLFuncPtr)();	// Set this pointer to start a function during the VBL Interrupt (ex: sound mixer)
 extern				u8		FS_CurrentScreen;
 
@@ -127,7 +125,7 @@ extern volatile	u8	IKBD_Keyboard[128];	// Internal
 //------------------------------------------
 // User Functions
 
-char	*FalconInit(u32 flags, u32 *pal);	// Return NULL if everything is ok, else it will return a string describing the error.
+char	*FalconInit(u32 flags);	// Return NULL if everything is ok, else it will return a string describing the error.
 void	FalconExit(void);
 // INFO: The screen parameter is the screen you need to work in
 // INFO: Return FL_COPY for normal process, or FL_C2P to activate Chunky2Planar conversion of the Screen, only supported in 8bits screen and CT60 mode !
@@ -158,7 +156,6 @@ void	FastCopy16Skip(__reg("a0") void *src, __reg("a1") void *dst, __reg("d0") u3
 
 //******************************************
 
-
 //------------------------------------------
 // Internal Stuff (Do Not Use !)
 
@@ -169,12 +166,11 @@ extern	volatile	u16		FS_VblAck;
 extern	volatile	u16		FS_SetNewScreen;
 extern	volatile	void	*FS_NewScreenAdrs;
 extern	volatile	u16		FS_Vmode;
-
+/*
 extern	volatile	u32		*FS_PalettePtr;
-
 extern	volatile	u32		CpuSaveCACR;
 extern	volatile	u32		CpuSavePCR;
-
+*/
 typedef struct
 {
 	signed short	x;
@@ -186,19 +182,6 @@ typedef struct
 }					IKBD_MouseData;
 
 extern IKBD_MouseData	IKBD_Mouse;	// Mouse data
-
-// VGA resolutions
-LONG VGA320180(void);
-LONG VGA320240(void);
-LONG VGA640480(void);
-
-// RGB resolutions
-LONG RGB320180(void);
-LONG RGB320240(void);
-LONG RGB640480(void);
-
-LONG RGB320240_50HZ(void);
-LONG VGA320240_50HZ(void);
 
 LONG	SetVidel(void);
 LONG	SaveVidel(void);

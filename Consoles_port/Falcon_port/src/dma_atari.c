@@ -5,31 +5,41 @@
 #include <string.h>
 #include <tos.h>
 #include "types.h"
-#include "dsp.h"
+#include "dma.h"
 
 extern void set_dma_sound(void * buffer, unsigned int len);
+extern void set_dma_sound_noloop(void * buffer, unsigned int len);
 extern void stop_dma_sound(void);	/* needs to be called in supervisor mode */
-extern unsigned int get_dma_status(void);	/* needs to be called in supervisor mode */
+//extern unsigned int get_dma_status(void);	/* needs to be called in supervisor mode */
 
 static unsigned char *s_stRamBuffer;
 static unsigned int s_stRamBufferSize;
 
-void Sound_Load(const unsigned char* path, SOUND* s)
+static SOUND snd;
+
+static void Sound_free()
 {
-	FILE* fp;
-	fp = fopen(path, "rb");
-	fseek(fp, 0L, SEEK_END);
-	s->size = ftell(fp);
-	fseek(fp, 0L, SEEK_SET);
-	s->data = (unsigned char *)Mxalloc(s->size, MX_STRAM);
-	fread(s->data, 1, s->size, fp);
-	fclose(fp);
+	if (snd.data) Mfree(snd.data);
 }
 
-void Sound_free(SOUND s)
+void Sound_Load(unsigned char* path)
 {
-	if (s.data != NULL) Mfree(s.data);
+	int fp;
+	unsigned short	handle;
+	
+	DMA_Stop();
+	Sound_free();
+
+	fp = Fopen(path, 1);
+	Fseek(0, fp,  SEEK_END);
+	handle = fp & 0xFFFF;
+	snd.size = Fseek(0, handle, 2);
+	Fseek(0, handle, 0);
+	snd.data = (unsigned char *)Mxalloc(snd.size, MX_STRAM);
+	Fread(handle, snd.size, snd.data);
+	Fclose(handle);
 }
+
 
 void DMA_Stop(void)
 {
@@ -39,11 +49,14 @@ void DMA_Stop(void)
 void DMA_Uninit(void)
 {
 	DMA_Stop();
-	if (s_stRamBuffer != NULL) {
+	if (s_stRamBuffer != NULL) 
+	{
 		Mfree(s_stRamBuffer);
 		s_stRamBuffer = NULL;
 	}
 	s_stRamBufferSize = 0;
+	Sound_free();
+
 }
 
 bool DMA_Init(void) 
@@ -52,23 +65,25 @@ bool DMA_Init(void)
 	s_stRamBufferSize = DMASOUND_BUFFER_SIZE;
 	s_stRamBuffer = (unsigned char *)Mxalloc(s_stRamBufferSize, MX_STRAM);
 	if(s_stRamBuffer == NULL) {
-		printf("Failed to allocate %u bytes of ST RAM for DMA sound.\n", s_stRamBufferSize);
 		s_stRamBufferSize = 0;
 		return false;
 	}
 	return true;
 }
 
-void DMA_Play(const unsigned char *data, const unsigned long size)
+void DMA_Play(unsigned char loop)
 {
-	set_dma_sound(data, size);
+	if (loop == 1)
+		set_dma_sound(snd.data, snd.size);
+	else
+		set_dma_sound_noloop(snd.data, snd.size);
 }
 
 /**
  * Should return 2 if playing sound, 0 if not
  */
-unsigned char DMA_GetStatus(void)
+/*unsigned char DMA_GetStatus(void)
 {
 	unsigned char status = (unsigned char)Supexec(get_dma_status);
 	return (status != 0) ? 2 : 0;
-}
+}*/

@@ -23,7 +23,7 @@
 	public	_CpuRestoreState
 
 	public	_FastCopy16
-	public	_VFastCopy16
+	;public	_VFastCopy16
 	public	_FastCopy32
 	public	_FastClear32
 	public	_VFastCopy32
@@ -96,12 +96,12 @@ VBL:
 	tst.l	_FS_VBLFuncPtr
 	beq.s	.noHook
 
-;	move.l	#$FFFFFFFF,$FFFF9800.w
+	move.l	#$FFFFFFFF,$FFFF9800.w
 	movem.l	a0-a2/d0-d2,-(a7)	; User function VBL Hook
 	move.l	_FS_VBLFuncPtr,a0
 	jsr	(a0)
 	movem.l	(a7)+,a0-a2/d0-d2
-;	move.l	#0,$FFFF9800.w
+	move.l	#0,$FFFF9800.w
 
 .noHook:
 	rte
@@ -270,19 +270,19 @@ _FastCopy16:	; Multiple of 8 and Not more than 500Kbytes
 	rts
 	
 	
-_VFastCopy16:	; Multiple of 32
+;_VFastCopy16:	; Multiple of 32
 ; a0 = src
 ; a1 = dst
 ; d0 = size
-	movem.w	d3-d7,-(a7)
-	lsr.w	#4,d0
-	subq.w	#1,d0
-.copy:	movem.w	(a0)+,d1-d7/a2
-	movem.w	d1-d7/a2,(a1)
-	lea	16(a1),a1
-	dbra	d0,.copy
-	movem.w	(a7)+,d3-d7
-	rts
+;	movem.w	d3-d7,-(a7)
+;	lsr.w	#4,d0
+;	subq.w	#1,d0
+;.copy:	movem.w	(a0)+,d1-d7/a2
+;	movem.w	d1-d7/a2,(a1)
+;	lea	16(a1),a1
+;	dbra	d0,.copy
+;	movem.w	(a7)+,d3-d7
+;	rts
 
 
 _FastCopy32:	; Multiple of 8 and Not more than 500Kbytes

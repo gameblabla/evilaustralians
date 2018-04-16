@@ -12,7 +12,6 @@
 extern	unsigned long	asm_mp2_player[];
 LONG					asm_mp2_start(void);
 LONG					asm_mp2_stop(void);
-
 unsigned char	*DMAbuffer = 0;
 int				DMAbuflen;
 
@@ -23,12 +22,12 @@ char	*MP2_Load(char *filename)
 	int	handle, size;
 
 	if (Dsp_Lock() != 0)
-		return ("Dsp already in use !");
+		return ("");
 
 	if (Locksnd() != 1)
 	{
 		Dsp_Unlock();
-		return ("Sound system already in use !");
+		return ("");
 	}
 
 	handle = Fopen(filename, 1);
@@ -36,7 +35,7 @@ char	*MP2_Load(char *filename)
 	{
 		Unlocksnd();
 		Dsp_Unlock();
-		return ("Cannot open MP2 file.");
+		return ("");
 	}
 
 	mp2filehandle = handle & 0xFFFF;
@@ -57,7 +56,7 @@ char	*MP2_Load(char *filename)
 		Fclose(mp2filehandle);
 		Unlocksnd();
 		Dsp_Unlock();
-		return ("Not enough memory to load MP2 file.");
+		return ("");
 	}
 	#endif
 	return (0);
@@ -75,7 +74,7 @@ void	MP2_Start(unsigned char loop)
 		*ptr++ = (unsigned long)DMAbuflen;
 		*ptr++ = MP2_INT_SPEED;
 		*ptr++ = MP2_EXT_SPEED;
-		*ptr++ = loop;
+		*ptr++ = loop*8;
 
 		Supexec(asm_mp2_start);
 	}

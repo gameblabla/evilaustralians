@@ -1,7 +1,7 @@
 // FalconSystem v5 Demo Example
 #include "graphics.h"
-unsigned short DV_SCREEN_WIDTH = 160;
-unsigned short DV_SCREEN_HEIGHT = 120;
+#define DV_SCREEN_WIDTH = 160;
+#define DV_SCREEN_HEIGHT = 120;
 
 void Load_BMP(unsigned char* path, BITMAP *b, const unsigned char frame_width)
 {
@@ -41,6 +41,7 @@ void Free_BMP(BITMAP b)
 /*
 DrawSprite supports clipping
 */
+/*
 void DrawSprite(BITMAP* b, u16* dst, short x, unsigned short y)
 {
 	u16* to;
@@ -78,7 +79,7 @@ void DrawSprite(BITMAP* b, u16* dst, short x, unsigned short y)
         to += RL_SCREEN_WIDTH;
         from += b->width;
     }
-}
+}*/
 
 void DrawSprite_frame(BITMAP* b, u16* dst, short x, unsigned short y, unsigned char frame)
 {
@@ -266,7 +267,7 @@ void Notrans_DrawSprite_NoChecks_scroll(BITMAP* b, u16* scr, unsigned short scro
 {
 	u16* dst = (u16*)scr;
 	u16* src = (u16*)b->data;
-	u16 row = b->height;
+	unsigned char row = b->height;
 	
 	while (row--)
 	{

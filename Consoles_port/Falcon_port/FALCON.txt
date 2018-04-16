@@ -1,0 +1,58 @@
+Evil Australians for Atari Falcon (030/60)
+================
+
+By gameblabla (https://gameblabla.nl)
+
+Evil Australians is an action/platformer game.
+The game has several missions and in each mission, you are stuck in an arena where
+you must defeat all the remaining enemies.
+To defeat the enemies, you have a rapid-fire gun that can shoot several bullets at the same time.
+
+Requirements 
+============
+
+An Atari Falcon or compatible with 4MB of STRAM.
+Recommended : CT60/CT63, preferably with some TT-RAM. 
+
+There are 4 executables you can use.
+
+ev_nodsp.prg
+Doesn't require a DSP to run, a bit faster, works on stock Falcon.
+
+ev_dsp.prg
+Will make use of a DSP, works on a stock falcon too.
+
+ev60_nodsp.prg
+Requires a 68040+ cpu (CT60/CT63), no DSP support.
+
+ev60_dsp.prg
+Requires a 68040+ cpu (CT60/CT63), DSP (Sound) support.
+
+ev_cf.prg
+Coldfire binary. Untested
+
+Executables without DSP support will use STE sound instead. Quality will be lower. 
+
+Story
+==========
+
+John, living in Australia, is an avid video game collector.
+However, he learns from the news that the Australian government is soon going to ban video games.
+John became furious : 
+he grabs his weapons and swears vengeance on the government.
+
+However 7 years ago, 
+the government collected his own DNA as part of a secret project.
+This secret project allowed the government to steal DNAs from all the aussies.
+The Government learned of John's plan and they used his DNA to build an entire clone army of himself.
+
+John is now facing an entire army of himself,
+will he make it alive and finally kill the law ?
+
+
+Controls
+===========
+
+Arrows/Joystick = Move
+LSHIFT/Up = Jump
+SPACE/Button 1 = Fire
