@@ -1,0 +1,3 @@
+I used ffmpeg to convert the songs to mp2.
+
+ffmpeg -i "auss.ogg" -b:a 128k -codec:a mp2 -ar 32000 auss.mp2

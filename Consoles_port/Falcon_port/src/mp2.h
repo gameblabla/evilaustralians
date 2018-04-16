@@ -1,0 +1,19 @@
+//
+// C Wrapper for MP2 Audio Player - by Orion_ [2013]
+//
+// DSP MPEG Audio Layer 2 player by Tomas Berndtsson, NoBrain/NoCrew
+//
+// Add these files to your compilation command: mp2.c mp2.s
+//
+
+#ifndef	_MP2_WRAPPER_H_
+#define	_MP2_WRAPPER_H_
+
+#define	MP2_INT_SPEED	32000	// 32khz max
+#define	MP2_EXT_SPEED	0
+
+char	*MP2_Load(char *filename);	// Return NULL if everything is ok, else it will return a string describing the error.
+void	MP2_Start(unsigned char loop);
+void	MP2_Stop(void);
+
+#endif
