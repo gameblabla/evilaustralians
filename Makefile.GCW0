@@ -12,13 +12,12 @@ ${OUTPUT}:${OBJS}
 	${CC} -o ${OUTPUT} ${SOURCES} ${CFLAGS} ${LDFLAGS} ${DEFINES} 
 
 pack:
-	mkdir opk
 	mv $(OUTPUT) ./opk/$(OUTPUT)
 	cp -r ./DATA ./opk/DATA
 	cp -r ./MUS ./opk/MUS
 	mksquashfs ./opk Evil_australians.opk -all-root -noappend -no-exports -no-xattrs
-	rm -r ./opk
+	rm -r ./opk/DATA ./opk/MUS ./opk/${OUTPUT}
 	
 clean:
 	rm *.o ./src/*.o ./WRAPPER/*.o ${OUTPUT}
-	m -r ./opk
+	rm -r ./opk/DATA ./opk/MUS ./opk/${OUTPUT}
