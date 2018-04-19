@@ -106,6 +106,22 @@ struct bull
 	unsigned char power;
 } bullets[32];
 
+#ifdef DREAMCAST
+#define MUS_1 "MUS/auss.opus"
+#define MUS_2 "MUS/batt.opus"
+#define MUS_3 "MUS/end.opus"
+#define MUS_4 "MUS/inst.opus"
+#define MUS_5 "MUS/hero.opus"
+#define MUS_6 "MUS/win.opus"
+#else
+#define MUS_1 "MUS/auss.mp3"
+#define MUS_2 "MUS/batt.mp3"
+#define MUS_3 "MUS/end.mp3"
+#define MUS_4 "MUS/inst.mp3"
+#define MUS_5 "MUS/hero.mp3"
+#define MUS_6 "MUS/win.mp3"
+#endif
+
 void Change_game(unsigned char mode, unsigned char level);
 void Load_Images(unsigned char level);
 void Reset_default_values(unsigned char level);

@@ -1,21 +1,25 @@
-CC=kos-cc
+CC	= kos-cc
 
-SH_DIRECTORY=/opt/toolchains/dc/sh-elf/bin/
+CFLAGS = -O2 -D_SDL -DDREAMCAST -DSOUND_ENABLED -Isrc -std=gnu99 -IWRAPPER
+LDFLAGS = -lSDL -lopusplay -lopusfile -logg -lopus -lm -lz -s -Wl,--as-needed
 
-CFLAGS = -Ofast -Wall -DDREAMCAST -I$(KOS_BASE)/addons/include/SDL -I$(KOS_BASE)/addons/include -I./WRAPPER
-LDFLAGS = -lSDL -lmp3 -ltremor -lmp3 -lm
-DEFINES = -DSOUND_ENABLED -DDREAMCAST -DUNCAPPED
-OUTPUT = violent_dc
+DEFINES = -Wall
+OUTPUT = hcl.elf
 
 SOURCES = src/main.c WRAPPER/DREAMCAST.c
-OBJS = ${SOURCES:.c=.o}
+OBJS = ${SOURCES:.c=.o} 
 
-${OUTPUT}:${OBJS}
-	${CC} -o ${OUTPUT}.elf ${SOURCES} ${CFLAGS} ${LDFLAGS} ${DEFINES}
+all: ${OUTPUT}
+
+${OUTPUT}: ${OBJS}
+	${CC} -o ${OUTPUT} ${OBJS} ${CFLAGS} ${LDFLAGS} ${DEFINES} 
+
+pack:
+	sh-elf-objcopy -R .stack -O binary hcl.elf main.bin
+	${KOS_BASE}/utils//scramble/scramble main.bin ./cd/1ST_READ.BIN
+	/opt/mksdiso/src/makeip/makeip ip.txt IP.BIN
+	genisoimage -V hydra -G IP.BIN -joliet -rock -l -x cd -o "hydra.iso" ./cd
+	cdi4dc hydra.iso hydra.cdi -d
 	
 clean:
-	rm *.o ./src/*.o ./WRAPPER/*.o ${OUTPUT}
-	
-scramble:
-	${SH_DIRECTORY}sh-elf-objcopy -R .stack -O binary ${OUTPUT}.elf ${OUTPUT}.bin
-	
+	rm *.o *.img src/*.o src/sdl/*.o src/dc/*.o src/enemies/*.o ${OUTPUT} main.bin IP.BIN hydra.iso

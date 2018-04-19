@@ -296,23 +296,23 @@ void Play_GameMusic(unsigned char song)
 	switch(song)
 	{
 		case 0:
-			Load_Music("MUS/auss.mp3");
+			Load_Music(MUS_1);
 		break;
 		case 1:
-			Load_Music("MUS/batt.mp3");
+			Load_Music(MUS_2);
 		break;
 		case 2:
-			Load_Music("MUS/end.mp3");
+			Load_Music(MUS_3);
 		break;
 		case 3:
-			Load_Music("MUS/inst.mp3");
+			Load_Music(MUS_4);
 			loop = 0;
 		break;
 		case 4:
-			Load_Music("MUS/hero.mp3");
+			Load_Music(MUS_5);
 		break;
 		case 5:
-			Load_Music("MUS/win.mp3");
+			Load_Music(MUS_6);
 			loop = 0;
 		break;
 	}
