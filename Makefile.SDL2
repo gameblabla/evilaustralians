@@ -1,10 +1,9 @@
 CC = gcc
 
-CFLAGS = -O2 -I./WRAPPER
-LDFLAGS = -lSDL2 -lSDL2_mixer -lSDL2_image
-DEFINES = -DDEBUG -DSOUND_ENABLED
-DEFINES += -DRECENT_RENDER
-OUTPUT = violent
+CFLAGS = -Ofast -I./WRAPPER
+LDFLAGS = -static-libgcc -lSDL2 -lSDL2_mixer -lSDL2_image -pthread 
+DEFINES = -DSOUND_ENABLED
+OUTPUT = violent.elf
 
 SOURCES = src/main.c WRAPPER/PC_SDL2.c
 OBJS = ${SOURCES:.c=.o}
@@ -13,5 +12,4 @@ ${OUTPUT}:${OBJS}
 	${CC} -o ${OUTPUT} ${SOURCES} ${CFLAGS} ${LDFLAGS} ${DEFINES} 
 	
 clean:
-	rm *.o
-	rm ${OUTPUT}
+	rm *.o ./src/*.o ./WRAPPER/*.o ${OUTPUT}

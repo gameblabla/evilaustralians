@@ -31,9 +31,9 @@ extern void Init_sound();
 
 extern void Load_Music(const char* directory);
 #ifdef THREEDO
-extern void Play_Music(int id, char loop)
+extern void Play_Music(int id, unsigned char loop)
 #else
-extern void Play_Music(char loop);
+extern void Play_Music(unsigned char loop);
 #endif
 extern void Clean_Music();
 

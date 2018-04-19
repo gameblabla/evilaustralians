@@ -21,7 +21,7 @@ and to permit persons to whom the Software is furnished to do so, subject to the
 #define SIZE_TILE 16
 //#define Put_Background(a,b) Notrans_DrawSprite_NoChecks_scroll(&bmp[0], scr, abs(scroll_x+160));
 
-char *collision_map, *background_map;
+unsigned char *collision_map, *background_map;
 unsigned char game_mode;
 unsigned short map_width, map_height, map_size;
 short scroll_x, scroll_progress;

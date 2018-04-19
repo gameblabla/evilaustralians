@@ -14,9 +14,7 @@ ${OUTPUT}:${OBJS}
 	${CC} -o ${OUTPUT}.elf ${SOURCES} ${CFLAGS} ${LDFLAGS} ${DEFINES}
 	
 clean:
-	rm src/*.o
-	rm WRAPPER/*.o
-	rm ${OUTPUT}
+	rm *.o ./src/*.o ./WRAPPER/*.o ${OUTPUT}
 	
 scramble:
 	${SH_DIRECTORY}sh-elf-objcopy -R .stack -O binary ${OUTPUT}.elf ${OUTPUT}.bin

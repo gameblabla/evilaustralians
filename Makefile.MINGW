@@ -1,21 +1,22 @@
-CC = i586-mingw32msvc-gcc
-SDL_CONFIG = /usr/i586-mingw32msvc/bin/sdl-config
+CC = i686-w64-mingw32-gcc
+CXX = i686-w64-mingw32-g++
+LD = i686-w64-mingw32-g++
+WINDRES = i686-w64-mingw32-windres
+SDL_CONFIG = /usr/i686-w64-mingw32/bin/sdl-config
 
-CFLAGS = -Os -I./WRAPPER -DJOYSTICK
-LDFLAGS = -static -lmingw32  -lSDL -lSDL_mixer
+CFLAGS = -Os -I./WRAPPER -DJOYSTICK -DSOUND_ENABLED -DDEBUG
+LDFLAGS = -static -lmingw32 -lSDL -lSDL_mixer -lmad
 LDFLAGS += $(shell $(SDL_CONFIG) --static-libs) 
-LDFLAGS += -ldinput8 -ldxguid -ldxerr8 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lversion -luuid
+LDFLAGS += -ldinput8 -ldxguid -ldxerr8 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lversion -luuid 
 DEFINES = -Wall -DRECENT_RENDER -DSOUND_ENABLED
 DEFINES += -DSAVE
 OUTPUT = violent.exe
 
-SOURCES = src/main.c WRAPPER/PC_MINGW.c
+SOURCES = src/main.c WRAPPER/PC_SDL12.c
 OBJS = ${SOURCES:.c=.o}
 
 ${OUTPUT}:${OBJS}
 	${CC} -o ${OUTPUT} ${SOURCES} ${CFLAGS} ${LDFLAGS} ${DEFINES} 
 	
 clean:
-	rm src/*.o
-	rm WRAPPER/*.o
-	rm ${OUTPUT}
+	rm *.o ./src/*.o ./WRAPPER/*.o ${OUTPUT}

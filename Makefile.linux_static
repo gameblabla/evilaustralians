@@ -1,18 +1,16 @@
 CC = gcc
-CXX = g++
-LD = g++
-SDL_CONFIG = ./buildscript/final/bin/sdl2-config
-CFLAGS = -Ofast -fdata-sections -ffunction-sections `$(SDL_CONFIG) --cflags` -DHOMEDIR -I./WRAPPER
-CXXFLAGS = $(CFLAGS) -std=c++11 -fno-exceptions -fno-rtti 
-LDFLAGS =-static-libgcc -static-libstdc++ -lgcc
+LD = gcc
+
+SDL_CONFIG =  ./buildscript/final/bin/sdl2-config
+
+CFLAGS = -Ofast -fdata-sections -ffunction-sections `$(SDL_CONFIG) --cflags` -DHOMEDIR -I./WRAPPER -I./buildscript/final/include
+LDFLAGS = -static 
+LDFLAGS += -lpthread -lrt -ldl
 LDFLAGS += -L./buildscript/final/lib -lSDL2 -lSDL2_mixer
-LDFLAGS += -lX11 -lXext -lXcursor -lXinerama -lXi -lXrandr -lXss -lXxf86vm
-LDFLAGS += -lxcb -lXau -lXrender -lXcursor -lXdmcp -lpthread -lrt -ldl
 LDFLAGS += -Wl,--as-needed,--gc-sections -flto -s
 LDFLAGS += -pthread -ldl
 EXE = violent_static
-OBJS = src/main.o WRAPPER/PC_SDL2.o
-
+OBJS = src/main.c WRAPPER/PC_SDL2.c
 
 #
 all: $(EXE).elf
@@ -21,14 +19,9 @@ all: $(EXE).elf
 	@echo Compiling $<...
 	@$(CC) $(CFLAGS) -c $< -o $@
 
-%.o: %.cpp
-	@echo Compiling $<...
-	@$(CXX) $(CXXFLAGS) -c $< -o $@
-
 $(EXE).elf: $(OBJS)
-	+$(LD) $^ -o $@ $(CXXFLAGS) $(LDFLAGS)
+	+$(LD) $^ -o $@ $(CFLAGS) $(LDFLAGS)
 
 .PHONY: clean
 clean:
-	rm -f `find . -name \*.o`
-	rm -f $(EXE).elf
+	rm *.o ./src/*.o ./WRAPPER/*.o ${OUTPUT}

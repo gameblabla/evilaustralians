@@ -18,7 +18,7 @@ and to permit persons to whom the Software is furnished to do so, subject to the
 
 #define SIZE_TILE 16
 
-char *collision_map, *background_map;
+const char *collision_map, *background_map;
 unsigned char game_mode;
 unsigned short map_width, map_height, map_size;
 short scroll_x, scroll_progress;
@@ -122,17 +122,17 @@ void HUD();
 void Missions_Graphics();
 
 void Put_Background(short scroll_x, unsigned char size_tile_w);
-struct main_player Animation_sprite(struct main_player pp);
+void Animation_sprite(struct main_player* pp);
 void Put_player();
 void Player();
-struct main_player Place_thing(unsigned char tile_x, unsigned char tile_y, struct main_player toput, unsigned char playerornot, unsigned char direction, unsigned char flip);
-struct main_player Enemy_AI(struct main_player enemy, struct main_player playertofollow);
+void Place_thing(unsigned char tile_x, unsigned char tile_y, struct main_player* toput, unsigned char playerornot, unsigned char direction, unsigned char flip);
+void Enemy_AI(struct main_player* enemy, struct main_player* playertofollow);
 unsigned char Collisions_MAP(short col_x, short col_y, unsigned short w, unsigned short h);
 unsigned char Collision(unsigned short x, unsigned short y, unsigned char w, unsigned char h, unsigned short x2, unsigned short y2, unsigned char w2, unsigned char h2);
 void Animate_Player();
-struct main_player Enemy(struct main_player enemy, unsigned char id, struct main_player pp);
+void Enemy(struct main_player* enemy, unsigned char id, struct main_player* pp);
 void Put_Enemy();
-
+void Play_GameMusic(unsigned char song);
 
 void Bullets();
 char* itoa_own(unsigned short n);
@@ -144,9 +144,9 @@ char* itoa_own(unsigned short n);
 
 char* itoa_own(unsigned short val)
 {
-	static char buf[4] = {0};
-	unsigned char i = 30;
+	static char buf[6] = {0};
+	unsigned char i = sizeof(buf);
 	for(; val && i ; --i, val /= 10)
-		buf[i] = "0123456789"[val % 10];
+		buf[i] = "0123456789abcdef"[val % 10];
 	return &buf[i+1];
 }

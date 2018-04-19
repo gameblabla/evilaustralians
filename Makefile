@@ -12,6 +12,4 @@ ${OUTPUT}:${OBJS}
 	${CC} -o ${OUTPUT} ${SOURCES} ${CFLAGS} ${LDFLAGS} ${DEFINES} 
 	
 clean:
-	rm src/*.o
-	rm WRAPPER/*.o
-	rm ${OUTPUT}
+	rm *.o ./src/*.o ./WRAPPER/*.o ${OUTPUT}

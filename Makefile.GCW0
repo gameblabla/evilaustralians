@@ -19,6 +19,4 @@ pack:
 	rm ./opk/$(OUTPUT)
 	
 clean:
-	rm src/*.o
-	rm WRAPPER/*.o
-	rm ${OUTPUT}
+	rm *.o ./src/*.o ./WRAPPER/*.o ${OUTPUT}
