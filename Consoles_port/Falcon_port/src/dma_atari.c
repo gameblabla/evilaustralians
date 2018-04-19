@@ -19,7 +19,7 @@ static SOUND snd;
 
 static void Sound_free()
 {
-	if (snd.data) Mfree(snd.data);
+	if (snd.data != NULL) Mfree(snd.data);
 }
 
 void Sound_Load(unsigned char* path)

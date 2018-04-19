@@ -21,7 +21,7 @@ and to permit persons to whom the Software is furnished to do so, subject to the
 #define SIZE_TILE 16
 //#define Put_Background(a,b) Notrans_DrawSprite_NoChecks_scroll(&bmp[0], scr, abs(scroll_x+160));
 
-unsigned char *collision_map, *background_map;
+char *collision_map, *background_map;
 unsigned char game_mode;
 unsigned short map_width, map_height, map_size;
 short scroll_x, scroll_progress;
@@ -136,7 +136,7 @@ void Enemy(struct main_player* enemy, unsigned char id, struct main_player* pp);
 void Put_Enemy();
 
 void Bullets();
-void Play_Music(unsigned char song);
+void Play_GameMusic(unsigned char song);
 
 /*
  *http://www.strudel.org.uk/itoa/

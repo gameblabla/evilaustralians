@@ -28,6 +28,7 @@
 	public	_FastClear32
 	public	_VFastCopy32
 	public	_VFastClear32
+	public  _VFastCopy128
 	public	_FastCopy16Skip
 
 	public	_IKBD_Install
@@ -304,7 +305,8 @@ _VFastCopy32:	; Multiple of 32
 	movem.l	d3-d7,-(a7)
 	lsr.l	#5,d0
 	subq.l	#1,d0
-.copy:	movem.l	(a0)+,d1-d7/a2
+.copy:	
+	movem.l	(a0)+,d1-d7/a2
 	movem.l	d1-d7/a2,(a1)
 	lea	32(a1),a1
 	dbra	d0,.copy
@@ -312,6 +314,23 @@ _VFastCopy32:	; Multiple of 32
 	rts
 
 
+_VFastCopy128:	; Multiple of 32
+; a0 = src
+; a1 = dst
+; d0 = size
+	move.l #19,d0
+.copy:	
+	move.l	(a0)+,(a1)+
+	move.l	(a0)+,(a1)+
+	move.l	(a0)+,(a1)+
+	move.l	(a0)+,(a1)+
+	move.l	(a0)+,(a1)+
+	move.l	(a0)+,(a1)+
+	move.l	(a0)+,(a1)+
+	move.l	(a0)+,(a1)+
+	dbra	d0,.copy
+	rts
+	
 _FastClear32:	; Multiple of 8 and Not more than 500Kbytes
 ; a0 = dst
 ; d0 = size

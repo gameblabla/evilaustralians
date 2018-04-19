@@ -150,6 +150,7 @@ void	FastClear32(__reg("a0") void *dst, __reg("d0") u32 size, __reg("d1") u32 da
 
 // Data must be 32bits (4bytes) aligned, size must be multiple of 32 bytes
 void	VFastCopy32(__reg("a0") void *src, __reg("a1") void *dst, __reg("d0") long size);
+void	VFastCopy128(__reg("a0") void *src, __reg("a1") void *dst);
 void	VFastClear32(__reg("a0") void *dst, __reg("d0") u32 size, __reg("d1") u32 data);
 
 void	FastCopy16Skip(__reg("a0") void *src, __reg("a1") void *dst, __reg("d0") u32 size, __reg("d1") u16 skip);

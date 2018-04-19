@@ -271,7 +271,7 @@ void Notrans_DrawSprite_NoChecks_scroll(BITMAP* b, u16* scr, unsigned short scro
 	
 	while (row--)
 	{
-		VFastCopy32(src+scroll, dst, 640);
+		VFastCopy128(src+scroll, dst);
 		dst += (RL_SCREEN_WIDTH);
 		src += b->width;
 	}

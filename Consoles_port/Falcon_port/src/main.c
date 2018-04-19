@@ -216,25 +216,25 @@ void Change_game(unsigned char mode, unsigned char level)
 	switch(mode)
 	{
 		case 0:
-			Play_Music(0);
+			Play_GameMusic(0);
 		break;
 		case 1:
-			Play_Music(4);
+			Play_GameMusic(4);
 		break;
 		case 2:
-			Play_Music(5);
+			Play_GameMusic(5);
 		break;
 		case 3:
-			Play_Music(3);
+			Play_GameMusic(3);
 		break;
 		case 4:
 		case 5:
-			Play_Music(2);
+			Play_GameMusic(2);
 		break;
 	}
 }
 
-void Play_Music(unsigned char song)
+void Play_GameMusic(unsigned char song)
 {
 	char* err;
 	unsigned char loop, dsp;
