@@ -1,13 +1,13 @@
-ROOTDIR = /opt/n64
+ROOTDIR = $(N64_INST)
 GCCN64PREFIX = $(ROOTDIR)/bin/mips64-elf-
 CHKSUM64PATH = $(ROOTDIR)/bin/chksum64
 MKDFSPATH = $(ROOTDIR)/bin/mkdfs
 HEADERPATH = $(ROOTDIR)/mips64-elf/lib
 N64TOOL = $(ROOTDIR)/bin/n64tool
 HEADERNAME = header
-LINK_FLAGS = -L$(ROOTDIR)/mips64-elf/lib -ldragon -lmikmod -lc -lm -ldragonsys -Tn64ld.x
-PROG_NAME = evil_australians
-CFLAGS = -std=gnu99 -march=vr4300 -mtune=vr4300 -Ofast -Wall -I$(ROOTDIR)/mips64-elf/include -s
+LINK_FLAGS = -L$(ROOTDIR)/mips64-elf/lib -ldragon ./libmikmod.a -lc -lm -ldragonsys  -Tn64ld.x
+PROG_NAME = spritemap
+CFLAGS = -std=gnu99 -march=vr4300 -mtune=vr4300 -Ofast -I$(ROOTDIR)/mips64-elf/include
 ASFLAGS = -mtune=vr4300 -march=vr4300
 CC = $(GCCN64PREFIX)gcc
 AS = $(GCCN64PREFIX)as
@@ -15,11 +15,19 @@ LD = $(GCCN64PREFIX)ld
 OBJCOPY = $(GCCN64PREFIX)objcopy
 OBJECTS = src/main.o src/N64.o
 
-$(PROG_NAME).v64: $(PROG_NAME).elf spritemap.dfs
+ifeq ($(N64_BYTE_SWAP),true)
+ROM_EXTENSION = .v64
+N64_FLAGS = -b -l 4M -h $(HEADERPATH)/$(HEADERNAME) -o $(PROG_NAME)$(ROM_EXTENSION) $(PROG_NAME).bin
+else
+ROM_EXTENSION = .z64
+N64_FLAGS = -l 4M -h $(HEADERPATH)/$(HEADERNAME) -o $(PROG_NAME)$(ROM_EXTENSION) $(PROG_NAME).bin
+endif
+
+$(PROG_NAME)$(ROM_EXTENSION): $(PROG_NAME).elf spritemap.dfs
 	$(OBJCOPY) $(PROG_NAME).elf $(PROG_NAME).bin -O binary
-	rm -f $(PROG_NAME).v64
-	$(N64TOOL) -b -l 4M -t "Evil Australians" -h $(HEADERPATH)/$(HEADERNAME) -o $(PROG_NAME).v64 $(PROG_NAME).bin -s 1M spritemap.dfs
-	$(CHKSUM64PATH) $(PROG_NAME).v64
+	rm -f $(PROG_NAME)$(ROM_EXTENSION)
+	$(N64TOOL) $(N64_FLAGS) -t "Spritemap Test" -s 2M spritemap.dfs
+	$(CHKSUM64PATH) $(PROG_NAME)$(ROM_EXTENSION)
 
 $(PROG_NAME).elf : $(OBJECTS)
 	$(LD) -o $(PROG_NAME).elf $(OBJECTS) $(LINK_FLAGS)
@@ -27,7 +35,7 @@ $(PROG_NAME).elf : $(OBJECTS)
 spritemap.dfs:
 	$(MKDFSPATH) spritemap.dfs ./filesystem/
 
-all: $(PROG_NAME).v64
+all: $(PROG_NAME)$(ROM_EXTENSION)
 
 clean:
-	rm -f *.v64 *.elf src/*.o *.bin *.dfs
+	rm -f *.v64 *.z64 *.elf *.o *.bin *.dfs

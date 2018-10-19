@@ -144,9 +144,9 @@ char* itoa_own(unsigned short n);
 
 char* itoa_own(unsigned short val)
 {
-	static char buf[4] = {0};
-	unsigned char i = 30;
+	static char buf[6] = {0, 0, 0, 0, 0, 0};
+	unsigned char i = sizeof(buf);
 	for(; val && i ; --i, val /= 10)
-		buf[i] = "0123456789"[val % 10];
+		buf[i] = "0123456789abcdef"[val % 10];
 	return &buf[i+1];
 }

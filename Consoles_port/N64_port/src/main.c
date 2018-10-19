@@ -10,7 +10,11 @@ including without limitation the rights to use, copy, modify, merge, publish, di
 and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
 */
-
+#include <stdio.h>
+#include <malloc.h>
+#include <string.h>
+#include <stdint.h>
+#include <libdragon.h>
 #include "main.h" 
 #include "maps.h" 
 
@@ -31,7 +35,6 @@ int main(void)
 {
 	Init_video();
 	Init_sound();
-	game_name = "Evil Australians";
 	
 	Load_SFX(0, "rom://hit.wav");
 	Load_SFX(1, "rom://hit2.wav");
@@ -40,11 +43,12 @@ int main(void)
 	Load_SFX(4, "rom://shoot_enemy.wav");
 	Change_game(0, current_level);
 	
+    /* Read in single sprite */
+
 	while (!done)
 	{	
 		Controls();
-		
-		if (BUTTON.QUIT) done = 1;
+		/*if (BUTTON.QUIT) done = 1;*/
 		
 		switch(game_mode)
 		{
@@ -169,7 +173,7 @@ void Missions_Graphics()
 	Print_text(156, 196, itoa_own(lives));
 	
 	if (wait < 20)
-	Put_image(3, 75, 12);
+	Put_image_trans(3, 75, 12);
 	else if (wait > 40) wait = 0;
 	
 	if (wait_tocontinue > 180)
@@ -263,7 +267,9 @@ void Print_text(unsigned short x, unsigned char y, char *text_ex)
 {
 	unsigned char i = 0;
 	for (i=0;text_ex[i]!='\0';i++)
-		Put_sprite_trans(5, x + (8 * i), y, 8, 8, text_ex[i]-33);
+	{
+		if (text_ex[i] != ' ') Put_sprite_trans(5, x + (8 * i), y, 8, 8, text_ex[i]-33);
+	}
 }
 
 void Reset_default_values(unsigned char level)
