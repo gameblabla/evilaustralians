@@ -17,38 +17,54 @@ and to permit persons to whom the Software is furnished to do so, subject to the
 #include <libdragon.h>
 #include "main.h" 
 #include "maps.h" 
+#include "audio.h" 
 
-/* I must warn you : currently, the source code is a huge mess ! :P 
- * In addition to that, there are several bugs/limitations :
- * - Vertical maps are not supported (yet)
- * - There are some hacks
- * - Some functions could be merged together (like Player and Enemy)
- * - It could be cleaned up
- * 
- * That aside, it was designed to be fairly portable thanks to my Gameblabal's Wrapper library.
- * The platforms supported are :
- * PC (Windows 95+, Linux, macOS), Sega Dreamcast, GCW0, TI-Nspire CX or even the 3DO !
- * (and more)
+/* The Nintendo 64 port was a huge hassle to port... Seriously, it was not even working at first.
+ * I eventually managed to make it work thanks to Cen64 becoming more accurate, more fixes to toolchain
+ * and the fact that N64 homebrew development is being given more attention.
+ * Huge thanks to the author of Flappy Bird N64 ! I took his audio and simply added looping to it.
+ * Maybe i'll get around to add MP3/Opus decoding later on...
  * */
+ 
+audio_t *g_audio = NULL;
+
+/* Load the sound effects cache */
+const char* sfx_files[SFX_NUM_SOUNDS] = 
+{
+	"/hit.raw", // 0
+	"/hit2.raw", // 1
+	"/shoot.raw", // 2
+	"/win.raw", // 3
+	"/shoot_enemy.raw", // 4
+	"/auss.raw", // 5
+	"/batt.raw", // 6
+	"/end.raw", // 7
+	"/hero.raw", // 8
+	"/inst.raw" // 9
+};
 
 int main(void)
 {
+	uint32_t i;
 	Init_video();
 	Init_sound();
 	
-	Load_SFX(0, "rom://hit.wav");
-	Load_SFX(1, "rom://hit2.wav");
-	Load_SFX(2, "rom://shoot.wav");
-	Load_SFX(3, "rom://victory.wav");
-	Load_SFX(4, "rom://shoot_enemy.wav");
-	Change_game(0, current_level);
+    g_audio = audio_setup( FREQUENCY_11KHZ, 4, sfx_files );
+    audio_write_silence();
+    
+    for(i=0;i<3;i++)
+    {
+		audio_load_pcm(g_audio, i, sfx_files);
+	}	
+	audio_load_pcm(g_audio, 4, sfx_files);
 	
-    /* Read in single sprite */
+	Change_game(0, current_level);
 
 	while (!done)
 	{	
 		Controls();
-		/*if (BUTTON.QUIT) done = 1;*/
+		
+		audio_tick( g_audio );
 		
 		switch(game_mode)
 		{
@@ -83,6 +99,9 @@ int main(void)
 		
 		Update_video();
 	}
+	
+	audio_free( g_audio );
+    g_audio = NULL;
 	
 	Clearing();
 
@@ -198,7 +217,6 @@ void Results_screen()
 				nohit = 0;
 			}
 			results_mode = 1;
-			Play_SFX(3);
 		break;
 		case 1:
 			results_wait++;
@@ -260,6 +278,44 @@ void Change_game(unsigned char mode, unsigned char level)
 	results_wait = 0;
 	Load_Images(level);
 	if (mode == 1) Reset_default_values(level);
+	
+	/* Yes, this mess is really necesarry. */
+	audio_write_silence();
+	audio_write_silence();
+	audio_tick( g_audio );
+	audio_write_silence();
+	audio_write_silence();
+	audio_free_pcm(g_audio, 5);
+	audio_free_pcm(g_audio, 6);
+	audio_free_pcm(g_audio, 7);
+	audio_free_pcm(g_audio, 8);
+	audio_free_pcm(g_audio, 9);
+	audio_free_pcm(g_audio, 3);
+	
+	switch(mode)
+	{
+		case 0:
+			audio_load_pcm(g_audio, 5, sfx_files);
+			audio_play_music( g_audio, 5, 1 );
+		break;
+		case 1:
+			audio_load_pcm(g_audio, 6, sfx_files);
+			audio_play_music( g_audio, 6, 1 );
+		break;
+		case 2:
+			audio_load_pcm(g_audio, 3, sfx_files);
+			audio_play_music( g_audio, 3, 0 );
+		break;
+		case 3:
+			audio_load_pcm(g_audio, 9, sfx_files);
+			audio_play_music( g_audio, 9, 0 );
+		break;
+		case 4:
+		case 5:
+			audio_load_pcm(g_audio, 7, sfx_files);
+			audio_play_music( g_audio, 7, 1 );
+		break;
+	}
 }
 
 /* Print text on-screen */
@@ -275,7 +331,7 @@ void Print_text(unsigned short x, unsigned char y, char *text_ex)
 void Reset_default_values(unsigned char level)
 {
 	unsigned char i;
-	unsigned char player_truex;
+	unsigned char player_truex = 0;
 	
 	scroll_progress = 0;
 	
@@ -519,7 +575,7 @@ void Player()
 				player.isfiring = 1;
 				bullet_touse = 0;
 				done_bullet = 1;
-				Play_SFX(2);
+				audio_play_sfx( g_audio, 2);
 				while(done_bullet)
 				{
 					if (bullets[bullet_touse].active == 0)
@@ -653,7 +709,7 @@ void Player()
 
 		if (player.hp < 1)
 		{
-			Play_SFX(2);
+			audio_play_sfx( g_audio, 2);
 			player.state = 3;
 		}
 	}
@@ -808,7 +864,7 @@ struct main_player Enemy(struct main_player enemy, unsigned char id, struct main
 				bullets[bullet_touse].power = 4;
 				bullets[bullet_touse].player = 0;
 				bullets[bullet_touse].speed = 4;
-				Play_SFX(4);
+				audio_play_sfx( g_audio, 4 );
 			}
 			enemy.isfiring = 0;
 		}
@@ -897,7 +953,7 @@ struct main_player Enemy(struct main_player enemy, unsigned char id, struct main
 
 		if (enemy.hp < 1)
 		{
-			Play_SFX(1);
+			audio_play_sfx( g_audio, 1 );
 			enemy.state = 3;
 		}
 	}
@@ -1005,7 +1061,7 @@ void Bullets()
 					{
 						player.hp -= bullets[i].power;
 						player.hit = 60;
-						Play_SFX(1);
+						audio_play_sfx( g_audio, 1 );
 					}
 					bullets[i].col = 1;
 				}
@@ -1027,7 +1083,7 @@ void Bullets()
 								enemies[a].hp -= bullets[i].power;
 								enemies[a].sighted = 1;
 								enemies[a].hit = 60;
-								Play_SFX(0);
+								audio_play_sfx( g_audio, 0 );
 								score += 10;
 							}
 							bullets[i].col = 1;
