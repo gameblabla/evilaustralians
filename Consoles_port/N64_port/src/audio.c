@@ -15,7 +15,7 @@
 #include "audio.h"
 
 
-audio_t *audio_setup(const uint16_t sample_rate, const uint8_t buffers, const char* sfx_files[])
+audio_t *audio_setup(const uint16_t sample_rate, const uint8_t buffers)
 {
     /* Start up the audio subsystem */
     audio_init( sample_rate, buffers );
@@ -29,11 +29,9 @@ audio_t *audio_setup(const uint16_t sample_rate, const uint8_t buffers, const ch
     return audio;
 }
 
-void audio_load_pcm(audio_t *audio, uint8_t number, const char* sfx_files[])
+void audio_load_pcm(audio_t *audio, uint8_t number, const char* path)
 {
-    pcm_sound_t *sfx;
-    sfx = read_dfs_pcm_sound( sfx_files[number],  audio->sample_rate, 1 );
-    audio->sfx_cache[number] = sfx;
+    audio->sfx_cache[number] = read_dfs_pcm_sound( path,  audio->sample_rate, 1 );
 
     // Setup the sound effects channels
     audio->channels[number].cursor = 0;
@@ -44,13 +42,21 @@ void audio_free_pcm(audio_t *audio, uint8_t number)
 {
 	if (audio->sfx_cache[number] != NULL)
 	{
-		if (audio->sfx_cache[number]->data != NULL) free( audio->sfx_cache[number]->data );
-		free( audio->sfx_cache[number] );
+		if (audio->sfx_cache[number]->data != NULL)
+		{
+			free( audio->sfx_cache[number]->data );
+			audio->sfx_cache[number]->data = NULL;
+		}
+		
+        free( audio->sfx_cache[number] );
 		audio->sfx_cache[number] = NULL;
+		
 		audio->channels[number].cursor = 0;
 		audio->channels[number].looping = 2;
-		audio->channels[number].sfx = NULL;
-		memset(audio->buffer, 0, audio_get_buffer_length() * STEREO_PCM_SAMPLE_SIZE);
+		if (audio->channels[number].sfx != NULL)
+		{
+			audio->channels[number].sfx = NULL;
+		}
 	}
 }
 
@@ -59,14 +65,25 @@ void audio_free(audio_t *audio)
     /* Clear the sound effects cache */
     for (uint8_t i = 0; i < SFX_NUM_SOUNDS; i++)
     {
-        free( audio->sfx_cache[i]->data );
-        free( audio->sfx_cache[i] );
-        audio->sfx_cache[i] = NULL;
+        if (audio->sfx_cache[i]->data != NULL)
+        {
+			free( audio->sfx_cache[i]->data );
+		}
+		
+        if (audio->sfx_cache[i] != NULL)
+        {
+			free( audio->sfx_cache[i] );
+			audio->sfx_cache[i] = NULL;
+		}
+        
     }
     /* Clear sound effects pointers from playback channels */
     for (uint8_t i = 0; i < SFX_NUM_CHANNELS; i++)
     {
-        audio->channels[i].sfx = NULL;
+		if (audio->channels[i].sfx != NULL)
+		{
+			audio->channels[i].sfx = NULL;
+		}
     }
     /* Shut down the audio subsystem */
     free( audio->buffer );
@@ -129,12 +146,11 @@ void audio_tick(audio_t *audio)
     }
 }
 
-void audio_play_sfx(audio_t *audio, const sfx_sounds_t sfx_sound)
+void audio_play_sfx(audio_t *audio, const uint8_t sfx_sound)
 {
     if ( audio != NULL )
     {
-        pcm_sound_t *sfx = audio->sfx_cache[sfx_sound];
-        if ( sfx != NULL )
+        if ( audio->sfx_cache[sfx_sound] != NULL )
         {
 			/* First channel is reserved for music. Maybe in the future, this can be expanded to 2
 			 * for stereo audio. (or heck, even 4, 5.. for surrond or Mod-based music)*/
@@ -143,7 +159,7 @@ void audio_play_sfx(audio_t *audio, const sfx_sounds_t sfx_sound)
                 if ( audio->channels[i].sfx == NULL )
                 {
 					audio->channels[i].looping = 0;
-                    audio->channels[i].sfx = sfx;
+                    audio->channels[i].sfx = audio->sfx_cache[sfx_sound];
                     audio->channels[i].cursor = 0;
                     break;
                 }
@@ -152,15 +168,14 @@ void audio_play_sfx(audio_t *audio, const sfx_sounds_t sfx_sound)
     }
 }
 
-void audio_play_music(audio_t *audio, const sfx_sounds_t sfx_sound, const uint8_t looping)
+void audio_play_music(audio_t *audio, const uint8_t sfx_sound, const uint8_t looping)
 {
     if ( audio != NULL )
     {
-        pcm_sound_t *sfx = audio->sfx_cache[sfx_sound];
-        if ( sfx != NULL )
+        if ( audio->sfx_cache[sfx_sound] != NULL )
         {
 			audio->channels[0].looping = looping;
-			audio->channels[0].sfx = sfx;
+			audio->channels[0].sfx = audio->sfx_cache[sfx_sound];
 			audio->channels[0].cursor = 0;
         }
     }

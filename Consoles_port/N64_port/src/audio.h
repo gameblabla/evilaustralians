@@ -24,15 +24,6 @@
 #define SFX_NUM_CHANNELS    8
 #define SFX_NUM_SOUNDS      10
 
-typedef enum sfx_sounds
-{
-    SFX_DIE,
-    SFX_HIT,
-    SFX_POINT,
-    SFX_SWOOSH,
-    SFX_WING
-} sfx_sounds_t;
-
 typedef struct
 {
     uint16_t sample_rate;
@@ -62,9 +53,9 @@ typedef struct
 
 /* Audio functions */
 
-audio_t *audio_setup(const uint16_t sample_rate, const uint8_t buffers, const char* sfx_files[]);
+audio_t *audio_setup(const uint16_t sample_rate, const uint8_t buffers);
 
-void audio_load_pcm(audio_t *audio, uint8_t number, const char* sfx_files[]);
+void audio_load_pcm(audio_t *audio, uint8_t number, const char* path);
 
 void audio_free_pcm(audio_t *audio, uint8_t number);
 
@@ -72,9 +63,9 @@ void audio_free(audio_t *audio);
 
 void audio_tick(audio_t *audio);
 
-void audio_play_sfx(audio_t *audio, const sfx_sounds_t sfx_sound);
+void audio_play_sfx(audio_t *audio, const uint8_t sfx_sound);
 
-void audio_play_music(audio_t *audio, const sfx_sounds_t sfx_sound, const uint8_t looping);
+void audio_play_music(audio_t *audio, const uint8_t sfx_sound, const uint8_t looping);
 
 pcm_sound_t *read_dfs_pcm_sound(const char *file, uint16_t sample_rate, uint8_t channels);
 

@@ -28,35 +28,18 @@ and to permit persons to whom the Software is furnished to do so, subject to the
  
 audio_t *g_audio = NULL;
 
-/* Load the sound effects cache */
-const char* sfx_files[SFX_NUM_SOUNDS] = 
-{
-	"/hit.raw", // 0
-	"/hit2.raw", // 1
-	"/shoot.raw", // 2
-	"/win.raw", // 3
-	"/shoot_enemy.raw", // 4
-	"/auss.raw", // 5
-	"/batt.raw", // 6
-	"/end.raw", // 7
-	"/hero.raw", // 8
-	"/inst.raw" // 9
-};
-
 int main(void)
 {
-	uint32_t i;
 	Init_video();
 	Init_sound();
 	
-    g_audio = audio_setup( FREQUENCY_11KHZ, 4, sfx_files );
+    g_audio = audio_setup( FREQUENCY_11KHZ, 4 );
     audio_write_silence();
     
-    for(i=0;i<3;i++)
-    {
-		audio_load_pcm(g_audio, i, sfx_files);
-	}	
-	audio_load_pcm(g_audio, 4, sfx_files);
+	audio_load_pcm(g_audio, 0, "/hit.raw");
+	audio_load_pcm(g_audio, 1, "/hit2.raw");
+	audio_load_pcm(g_audio, 2, "/shoot.raw");
+	audio_load_pcm(g_audio, 4, "/shoot_enemy.raw");
 	
 	Change_game(0, current_level);
 
@@ -226,7 +209,7 @@ void Results_screen()
 			
 			if (results_wait > 90)
 			{
-				if (nohit) Print_text(144, 140, "PERFECT !");
+				if (nohit) Print_text(128, 140, "PERFECT !");
 				else Print_text(62, 140, "PREPARE FOR THE NEXT MISSION");
 			}
 			
@@ -280,40 +263,30 @@ void Change_game(unsigned char mode, unsigned char level)
 	if (mode == 1) Reset_default_values(level);
 	
 	/* Yes, this mess is really necesarry. */
-	audio_write_silence();
-	audio_write_silence();
-	audio_tick( g_audio );
-	audio_write_silence();
-	audio_write_silence();
-	audio_free_pcm(g_audio, 5);
-	audio_free_pcm(g_audio, 6);
-	audio_free_pcm(g_audio, 7);
-	audio_free_pcm(g_audio, 8);
-	audio_free_pcm(g_audio, 9);
 	audio_free_pcm(g_audio, 3);
 	
 	switch(mode)
 	{
 		case 0:
-			audio_load_pcm(g_audio, 5, sfx_files);
-			audio_play_music( g_audio, 5, 1 );
+			audio_load_pcm(g_audio, 3, "/auss.raw");
+			audio_play_music( g_audio, 3, 1 );
 		break;
 		case 1:
-			audio_load_pcm(g_audio, 6, sfx_files);
-			audio_play_music( g_audio, 6, 1 );
+			audio_load_pcm(g_audio, 3, "/batt.raw");
+			audio_play_music( g_audio, 3, 1 );
 		break;
 		case 2:
-			audio_load_pcm(g_audio, 3, sfx_files);
+			audio_load_pcm(g_audio, 3, "/win.raw");
 			audio_play_music( g_audio, 3, 0 );
 		break;
 		case 3:
-			audio_load_pcm(g_audio, 9, sfx_files);
-			audio_play_music( g_audio, 9, 0 );
+			audio_load_pcm(g_audio, 3, "/inst.raw");
+			audio_play_music( g_audio, 3, 0 );
 		break;
 		case 4:
 		case 5:
-			audio_load_pcm(g_audio, 7, sfx_files);
-			audio_play_music( g_audio, 7, 1 );
+			audio_load_pcm(g_audio, 3, "/end.raw");
+			audio_play_music( g_audio, 3, 1 );
 		break;
 	}
 }
